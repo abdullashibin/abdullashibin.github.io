@@ -1,27 +1,6 @@
 # Shibin Abdulla - WordPress Developer Portfolio
 
-A high-performance, static portfolio website showcasing WordPress development expertise, Gutenberg specialization, and modern web development practices.
 
-## 🚀 Live Demo
-
-Visit the live portfolio: [https://yourusername.github.io/portfolio-website](https://yourusername.github.io/portfolio-website)
-
-## ✨ Features
-
-- **Responsive Design**: Mobile-first approach with seamless desktop experience
-- **Performance Optimized**: Clean HTML/CSS/JS with fast loading times
-- **Accessibility**: WCAG compliant with proper semantic markup
-- **Modern UI**: Clean, professional design with minimal orange accent color
-- **Interactive Elements**: Smooth scrolling, mobile menu, project filtering
-- **Contact Form**: Functional contact form with validation
-- **SEO Friendly**: Proper meta tags and semantic structure
-
-## 🛠️ Technologies Used
-
-- **HTML5**: Semantic markup and accessibility features
-- **CSS3**: Modern styling with flexbox/grid layouts
-- **Vanilla JavaScript**: Interactive functionality without frameworks
-- **GitHub Pages**: Static hosting and deployment
 
 ## 📁 Project Structure
 
@@ -42,69 +21,6 @@ portfolio-website/
     └── gutenberg-block-editor-interface-with-custom-block.jpg
 \`\`\`
 
-## 🚀 Quick Start
-
-### Local Development
-
-1. **Clone the repository**
-   \`\`\`bash
-   git clone https://github.com/yourusername/portfolio-website.git
-   cd portfolio-website
-   \`\`\`
-
-2. **Open in browser**
-   \`\`\`bash
-   # Option 1: Direct file opening
-   open index.html
-   
-   # Option 2: Local server (recommended)
-   python -m http.server 8000
-   # or
-   npx serve .
-   \`\`\`
-
-3. **View locally**
-   Open `http://localhost:8000` in your browser
-
-### GitHub Pages Deployment
-
-1. **Push to GitHub**
-   \`\`\`bash
-   git add .
-   git commit -m "Initial portfolio setup"
-   git push origin main
-   \`\`\`
-
-2. **Enable GitHub Pages**
-   - Go to repository Settings
-   - Scroll to "Pages" section
-   - Select "Deploy from a branch"
-   - Choose "main" branch and "/ (root)" folder
-   - Click "Save"
-
-3. **Access your site**
-   Your portfolio will be available at: `https://yourusername.github.io/repository-name`
-
-## 📝 Customization
-
-### Personal Information
-Update the following in `index.html`:
-- Name and title in navigation and hero section
-- About section content and experience
-- Contact information and social links
-- Project showcases and descriptions
-
-### Styling
-Modify `styles.css`:
-- Color scheme in CSS custom properties
-- Typography and spacing
-- Component-specific styles
-
-### Functionality
-Enhance `script.js`:
-- Contact form submission endpoint
-- Additional interactive features
-- Analytics integration
 
 ## 🎨 Design System
 
@@ -168,13 +84,3 @@ Enhance `script.js`:
 
 This project is open source and available under the [MIT License](LICENSE).
 
-## 📞 Contact
-
-**Shibin Abdulla**
-- Email: shibin@example.com
-- LinkedIn: [linkedin.com/in/shibin-abdulla](https://linkedin.com/in/shibin-abdulla)
-- GitHub: [github.com/shibin-abdulla](https://github.com/shibin-abdulla)
-
----
-
-Built with ❤️ using modern web technologies and optimized for performance.

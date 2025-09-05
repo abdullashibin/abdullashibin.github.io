@@ -3,701 +3,310 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shibin Abdulla - WordPress Developer & Gutenberg Specialist</title>
-    <meta name="description" content="High-performance WordPress developer specializing in Gutenberg blocks, WooCommerce, and clean, SEO-friendly websites.">
+    <title>Shibin Abdulla - WordPress Developer</title>
+    <meta name="description" content="High-performance WordPress developer specializing in Gutenberg, WooCommerce, and custom solutions">
     <link rel="stylesheet" href="styles.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
     <!-- Navigation -->
-    <nav class="nav-fixed">
+    <nav class="navbar">
         <div class="nav-container">
-            <div class="nav-content">
-                <!-- Logo -->
-                <div class="nav-logo">
-                    <h1>Shibin Abdulla</h1>
-                </div>
-
-                <!-- Desktop Navigation -->
-                <div class="nav-desktop">
-                    <div class="nav-links">
-                        <a href="#home" class="nav-link">Home</a>
-                        <a href="#about" class="nav-link">About</a>
-                        <a href="#technologies" class="nav-link">Technologies</a>
-                        <a href="#projects" class="nav-link">Projects</a>
-                        <a href="#contact" class="nav-link">Contact</a>
-                    </div>
-                </div>
-
-                <!-- Mobile menu button -->
-                <div class="nav-mobile">
-                    <button class="mobile-menu-btn" id="mobileMenuBtn">
-                        <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="4" x2="20" y1="6" y2="6"></line>
-                            <line x1="4" x2="20" y1="12" y2="12"></line>
-                            <line x1="4" x2="20" y1="18" y2="18"></line>
-                        </svg>
-                        <svg class="close-icon hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="m18 6-12 12"></path>
-                            <path d="m6 6 12 12"></path>
-                        </svg>
-                    </button>
-                </div>
+            <div class="nav-logo">
+                <span class="logo-text">SA</span>
             </div>
-
-            <!-- Mobile Navigation -->
-            <div class="nav-mobile-menu hidden" id="mobileMenu">
-                <div class="mobile-menu-content">
-                    <a href="#home" class="mobile-nav-link">Home</a>
-                    <a href="#about" class="mobile-nav-link">About</a>
-                    <a href="#technologies" class="mobile-nav-link">Technologies</a>
-                    <a href="#projects" class="mobile-nav-link">Projects</a>
-                    <a href="#contact" class="mobile-nav-link">Contact</a>
-                </div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="#home" class="nav-link">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#about" class="nav-link">About</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#technologies" class="nav-link">Technologies</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#projects" class="nav-link">Projects</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#contact" class="nav-link">Contact</a>
+                </li>
+            </ul>
+            <div class="social-links">
+                <a href="https://linkedin.com/in/shibin-abdulla" target="_blank" class="social-link">
+                    <i class="fab fa-linkedin"></i>
+                </a>
+                <a href="https://github.com/abdullashibin" target="_blank" class="social-link">
+                    <i class="fab fa-github"></i>
+                </a>
+                <a href="mailto:shibin71@outlook.com" class="social-link">
+                    <i class="fas fa-envelope"></i>
+                </a>
+            </div>
+            <div class="hamburger">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
             </div>
         </div>
     </nav>
 
-    <main>
-        <!-- Hero Section -->
-        <section id="home" class="hero-section">
-            <div class="hero-container">
-                <div class="hero-content">
-                    <!-- Main heading -->
-                    <div class="hero-heading">
-                        <h1 class="hero-title">
-                            Hi, I'm <span class="text-primary">Shibin Abdulla</span>
-                        </h1>
-                        <h2 class="hero-subtitle">
-                            WordPress Developer & Gutenberg Specialist
-                        </h2>
-                    </div>
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="hero-container">
+            <div class="hero-content">
+                <h1 class="hero-title">
+                    Hi, I'm <span class="highlight">Shibin Abdulla</span>
+                </h1>
+                <h2 class="hero-subtitle">WordPress Developer</h2>
+                <p class="hero-description">
+                    I build high-performance WordPress websites using the native Gutenberg block editor — 
+                    no page-builder bloat, no unnecessary code. Clean, SEO-friendly, and built for speed.
+                </p>
+                <div class="hero-buttons">
+                    <a href="#projects" class="btn btn-primary">View My Work</a>
+                    <a href="#contact" class="btn btn-secondary">Get In Touch</a>
+                </div>
+            </div>
+            <div class="hero-image">
+                <div class="hero-avatar">
+                    <i class="fas fa-code"></i>
+                </div>
+            </div>
+        </div>
+    </section>
 
-                    <!-- Description -->
-                    <p class="hero-description">
-                        I build high-performance WordPress websites using the native Gutenberg block editor — no page-builder bloat,
-                        no unnecessary code. Clean, SEO-friendly, and built for speed.
+    <!-- About Section -->
+    <section id="about" class="about">
+        <div class="container">
+            <h2 class="section-title">About Me</h2>
+            <div class="about-content">
+                <div class="about-text">
+                    <p>
+                        I specialize in high-performance WordPress development using the native Gutenberg block editor. 
+                        Gutenberg is the future of WordPress: modern, scalable, and built for speed. My builds are clean, 
+                        SEO-friendly, and consistently achieve excellent Core Web Vitals and PageSpeed scores.
                     </p>
-
-                    <!-- CTA Buttons -->
-                    <div class="hero-buttons">
-                        <a href="#projects" class="btn btn-primary">View My Work</a>
-                        <a href="#contact" class="btn btn-outline">Get In Touch</a>
+                    <p>
+                        Beyond building pages, I specialize in extending WordPress and WooCommerce with custom functionality 
+                        and technical problem-solving. I'm available for remote, contract-based work only.
+                    </p>
+                    <div class="services">
+                        <h3>What I Offer:</h3>
+                        <ul>
+                            <li>High-performance WordPress development with Gutenberg</li>
+                            <li>WooCommerce development and advanced customizations</li>
+                            <li>White-label WordPress solutions for agencies</li>
+                        </ul>
                     </div>
-
-                    <!-- Social Links -->
-                    <div class="hero-social">
-                        <a href="https://github.com" target="_blank" rel="noopener noreferrer" class="social-link">
-                            <svg class="social-icon" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-                            </svg>
-                            <span class="sr-only">GitHub</span>
-                        </a>
-                        <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" class="social-link">
-                            <svg class="social-icon" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-                            </svg>
-                            <span class="sr-only">LinkedIn</span>
-                        </a>
-                        <a href="mailto:shibin@example.com" class="social-link">
-                            <svg class="social-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="m4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                                <polyline points="22,6 12,13 2,6"></polyline>
-                            </svg>
-                            <span class="sr-only">Email</span>
-                        </a>
+                </div>
+                <div class="about-stats">
+                    <div class="stat">
+                        <h3>1+</h3>
+                        <p>Years Experience</p>
                     </div>
-
-                    <!-- Scroll indicator -->
-                    <div class="scroll-indicator">
-                        <div class="scroll-arrow">
-                            <svg class="scroll-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="m19 14-7 7m0 0-7-7m7 7V3"></path>
-                            </svg>
-                        </div>
+                    <div class="stat">
+                        <h3>8+</h3>
+                        <p>Projects Completed</p>
+                    </div>
+                    <div class="stat">
+                        <h3>100%</h3>
+                        <p>Client Satisfaction</p>
                     </div>
                 </div>
             </div>
-        </section>
+        </div>
+    </section>
 
-        <!-- About Section -->
-        <section id="about" class="section bg-card">
-            <div class="container">
-                <div class="section-header">
-                    <h2 class="section-title">About Me</h2>
-                    <p class="section-description">
-                        Passionate WordPress developer specializing in high-performance websites and modern development practices
-                    </p>
-                </div>
+<!-- Technologies Section -->
+<section id="technologies" class="technologies">
+  <div class="container">
+    <h2 class="section-title">Technologies & Tools</h2>
+    <div class="tech-grid">
 
-                <div class="about-grid">
-                    <!-- Profile Image -->
-                    <div class="about-image">
-                        <div class="profile-container">
-                            <div class="profile-bg">
-                                <img src="/professional-developer-portrait.png" alt="Shibin Abdulla - WordPress Developer" class="profile-img">
-                            </div>
-                            <div class="availability-badge">Available for Remote Work</div>
-                        </div>
-                    </div>
+      <!-- WordPress -->
+      <div class="tech-item">
+        <i class="fab fa-wordpress tech-icon"></i>
+        <h3>WordPress</h3>
+        <p>Expert in Gutenberg, custom themes, and plugin development</p>
+      </div>
 
-                    <!-- About Content -->
-                    <div class="about-content">
-                        <div class="about-text">
-                            <h3 class="about-title">WordPress Developer & Gutenberg Specialist</h3>
-                            <div class="about-description">
-                                <p>I build high-performance WordPress websites using the native Gutenberg block editor — no page-builder bloat, no unnecessary code. Gutenberg is the future of WordPress: modern, scalable, and built for speed.</p>
-                                <p>My builds are clean, SEO-friendly, and consistently achieve excellent Core Web Vitals and PageSpeed scores. Beyond building pages, I specialize in extending WordPress and WooCommerce with custom functionality and technical problem-solving.</p>
-                                <p>I offer high-performance WordPress development with Gutenberg, WooCommerce development and advanced customizations, and white-label WordPress solutions for agencies.</p>
-                            </div>
-                        </div>
+      <!-- PHP -->
+      <div class="tech-item">
+        <i class="fab fa-php tech-icon"></i>
+        <h3>PHP</h3>
+        <p>Backend development and WordPress customizations</p>
+      </div>
 
-                        <!-- Availability Badges -->
-                        <div class="badges">
-                            <span class="badge badge-secondary">Remote Work Only</span>
-                            <span class="badge badge-outline">Contract-Based</span>
-                            <span class="badge badge-outline">Available Now</span>
-                        </div>
-                    </div>
-                </div>
+      <!-- HTML5 -->
+      <div class="tech-item">
+        <i class="fab fa-html5 tech-icon"></i>
+        <h3>HTML5</h3>
+        <p>Semantic markup and accessibility best practices</p>
+      </div>
 
-                <!-- Experience & Education -->
-                <div class="experience-education">
-                    <!-- Experience -->
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">
-                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect>
-                                    <line x1="16" x2="16" y1="2" y2="6"></line>
-                                    <line x1="8" x2="8" y1="2" y2="6"></line>
-                                    <line x1="3" x2="21" y1="10" y2="10"></line>
-                                </svg>
-                                Experience
-                            </h3>
-                        </div>
-                        <div class="card-content">
-                            <div class="timeline">
-                                <div class="timeline-item active">
-                                    <h4>Freelance Web Developer</h4>
-                                    <p class="timeline-date">May 2025 - Present</p>
-                                    <p class="timeline-desc">Providing high-performance WordPress solutions and custom development services</p>
-                                </div>
-                                <div class="timeline-item">
-                                    <h4>Web Developer</h4>
-                                    <p class="timeline-company">Mentegoz Technologies LLP</p>
-                                    <p class="timeline-date">Feb 2025 - May 2025 · 4 mos</p>
-                                    <p class="timeline-desc">On-site development experience</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+      <!-- CSS3 -->
+      <div class="tech-item">
+        <i class="fab fa-css3-alt tech-icon"></i>
+        <h3>CSS3</h3>
+        <p>Modern styling, animations, and responsive design</p>
+      </div>
 
-                    <!-- Education -->
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">
-                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
-                                    <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
-                                </svg>
-                                Education
-                            </h3>
-                        </div>
-                        <div class="card-content">
-                            <div class="timeline">
-                                <div class="timeline-item active">
-                                    <h4>Bachelor of Arts - BA</h4>
-                                    <p class="timeline-company">Rouzathul Uloom Arabic College</p>
-                                    <p class="timeline-desc">Arabic Language and Literature</p>
-                                </div>
-                                <div class="timeline-item">
-                                    <h4>High School Diploma</h4>
-                                    <p class="timeline-company">Farook College, Kozhikode</p>
-                                    <p class="timeline-desc">Science</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+      <!-- Figma -->
+      <div class="tech-item">
+        <i class="fab fa-figma tech-icon"></i>
+        <h3>Figma</h3>
+        <p>UI/UX design and prototyping</p>
+      </div>
+
+      <!-- VS Code: Official SVG icon -->
+      <div class="tech-item">
+        <img src="images/Visual_Studio_Code_1.35_icon.svg" alt="VS Code logo" class="tech-logo" />
+        <h3>VS Code</h3>
+        <p>Primary development environment</p>
+      </div>
+
+      <!-- V0: Placeholder (no official logo available) -->
+      <div class="tech-item">
+        <img src="images/v0-logo-light.svg" alt="VS Code logo" class="tech-logo" />
+        <h3>V0</h3>
+        <p>AI-powered design and rapid prototyping</p>
+      </div>
+
+      <!-- WooCommerce: Official logo SVG -->
+      <div class="tech-item">
+        <img src="images/WooCommerce_logo.svg" alt="WooCommerce logo" class="tech-logo" />
+        <h3>WooCommerce</h3>
+        <p>E-commerce solutions and customizations</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+   <!-- Projects Section -->
+<section id="projects" class="projects">
+    <div class="container">
+      <h2 class="section-title">Featured Projects</h2>
+      <div class="projects-grid">
+  
+        <!-- Project 1 -->
+        <div class="project-card">
+          <div class="project-image">
+            <img src="images/kannankandy.png" alt="E-commerce Platform" class="project-img">
+          </div>
+          <div class="project-content">
+            <h3>Electronics Store</h3>
+            <p>Mass WooCommerce solution with high performance.</p>
+            <div class="project-tech">
+              <span>WooCommerce</span>
+              <span>CSS3</span>
             </div>
-        </section>
-
-        <!-- Technologies Section -->
-        <section id="technologies" class="section">
-            <div class="container">
-                <div class="section-header">
-                    <h2 class="section-title">Technologies & Skills</h2>
-                    <p class="section-description">
-                        Specialized expertise in WordPress development, modern web technologies, and performance optimization
-                    </p>
-                </div>
-
-                <!-- Main Technologies Grid -->
-                <div class="tech-grid">
-                    <div class="tech-card">
-                        <div class="tech-header">
-                            <div class="tech-icon">
-                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <circle cx="12" cy="12" r="10"></circle>
-                                    <path d="m4.93 4.93 4.24 4.24"></path>
-                                    <path d="m14.83 9.17 4.24-4.24"></path>
-                                    <path d="m14.83 14.83 4.24 4.24"></path>
-                                    <path d="m9.17 14.83-4.24 4.24"></path>
-                                    <circle cx="12" cy="12" r="4"></circle>
-                                </svg>
-                            </div>
-                            <h3>WordPress</h3>
-                        </div>
-                        <p class="tech-desc">Expert in WordPress development with deep knowledge of themes, plugins, and custom post types</p>
-                        <div class="tech-skills">
-                            <span class="skill-tag">Custom Themes</span>
-                            <span class="skill-tag">Plugin Development</span>
-                            <span class="skill-tag">Multisite</span>
-                            <span class="skill-tag">REST API</span>
-                            <span class="skill-tag">Hooks & Filters</span>
-                        </div>
-                    </div>
-
-                    <div class="tech-card">
-                        <div class="tech-header">
-                            <div class="tech-icon">
-                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <polyline points="16 18 22 12 16 6"></polyline>
-                                    <polyline points="8 6 2 12 8 18"></polyline>
-                                </svg>
-                            </div>
-                            <h3>PHP</h3>
-                        </div>
-                        <p class="tech-desc">Strong PHP programming skills for backend development and WordPress customizations</p>
-                        <div class="tech-skills">
-                            <span class="skill-tag">Object-Oriented PHP</span>
-                            <span class="skill-tag">MVC Architecture</span>
-                            <span class="skill-tag">Custom Functions</span>
-                            <span class="skill-tag">Security Best Practices</span>
-                        </div>
-                    </div>
-
-                    <div class="tech-card">
-                        <div class="tech-header">
-                            <div class="tech-icon">
-                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
-                                </svg>
-                            </div>
-                            <h3>Frontend</h3>
-                        </div>
-                        <p class="tech-desc">Modern frontend technologies for creating responsive and interactive user interfaces</p>
-                        <div class="tech-skills">
-                            <span class="skill-tag">HTML5</span>
-                            <span class="skill-tag">CSS3</span>
-                            <span class="skill-tag">JavaScript</span>
-                            <span class="skill-tag">Responsive Design</span>
-                            <span class="skill-tag">Cross-browser Compatibility</span>
-                        </div>
-                    </div>
-
-                    <div class="tech-card">
-                        <div class="tech-header">
-                            <div class="tech-icon">
-                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-                                </svg>
-                            </div>
-                            <h3>Gutenberg</h3>
-                        </div>
-                        <p class="tech-desc">Specialized in Gutenberg block development and modern WordPress editing experience</p>
-                        <div class="tech-skills">
-                            <span class="skill-tag">Custom Blocks</span>
-                            <span class="skill-tag">Block Patterns</span>
-                            <span class="skill-tag">Block Themes</span>
-                            <span class="skill-tag">FSE</span>
-                            <span class="skill-tag">Performance Optimization</span>
-                        </div>
-                    </div>
-
-                    <div class="tech-card">
-                        <div class="tech-header">
-                            <div class="tech-icon">
-                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <circle cx="8" cy="21" r="1"></circle>
-                                    <circle cx="19" cy="21" r="1"></circle>
-                                    <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
-                                </svg>
-                            </div>
-                            <h3>WooCommerce</h3>
-                        </div>
-                        <p class="tech-desc">Advanced WooCommerce development and customization for e-commerce solutions</p>
-                        <div class="tech-skills">
-                            <span class="skill-tag">Custom Payment Gateways</span>
-                            <span class="skill-tag">Product Extensions</span>
-                            <span class="skill-tag">Checkout Customization</span>
-                            <span class="skill-tag">API Integration</span>
-                        </div>
-                    </div>
-
-                    <div class="tech-card">
-                        <div class="tech-header">
-                            <div class="tech-icon">
-                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
-                                    <path d="m21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
-                                    <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
-                                </svg>
-                            </div>
-                            <h3>Performance</h3>
-                        </div>
-                        <p class="tech-desc">Focus on website performance, Core Web Vitals, and SEO optimization</p>
-                        <div class="tech-skills">
-                            <span class="skill-tag">Core Web Vitals</span>
-                            <span class="skill-tag">PageSpeed Optimization</span>
-                            <span class="skill-tag">Caching Strategies</span>
-                            <span class="skill-tag">SEO Best Practices</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Tools & Software -->
-                <div class="tools-section">
-                    <h3 class="tools-title">Tools & Software</h3>
-                    <div class="tools-grid">
-                        <div class="tool-item">
-                            <h4>Figma</h4>
-                            <p>Design</p>
-                        </div>
-                        <div class="tool-item">
-                            <h4>VS Code</h4>
-                            <p>Development</p>
-                        </div>
-                        <div class="tool-item">
-                            <h4>v0</h4>
-                            <p>AI Tools</p>
-                        </div>
-                        <div class="tool-item">
-                            <h4>Git</h4>
-                            <p>Version Control</p>
-                        </div>
-                        <div class="tool-item">
-                            <h4>Docker</h4>
-                            <p>DevOps</p>
-                        </div>
-                        <div class="tool-item">
-                            <h4>Local WP</h4>
-                            <p>Development</p>
-                        </div>
-                        <div class="tool-item">
-                            <h4>Query Monitor</h4>
-                            <p>Debugging</p>
-                        </div>
-                        <div class="tool-item">
-                            <h4>GTmetrix</h4>
-                            <p>Performance</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Specializations -->
-                <div class="specializations">
-                    <h3 class="spec-title">What I Specialize In</h3>
-                    <div class="spec-grid">
-                        <div class="spec-card">
-                            <div class="spec-icon">
-                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-                                </svg>
-                            </div>
-                            <h4>High-Performance Development</h4>
-                            <p>Clean code, excellent Core Web Vitals, and consistently high PageSpeed scores</p>
-                        </div>
-                        <div class="spec-card">
-                            <div class="spec-icon">
-                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <polyline points="16 18 22 12 16 6"></polyline>
-                                    <polyline points="8 6 2 12 8 18"></polyline>
-                                </svg>
-                            </div>
-                            <h4>Gutenberg Block Development</h4>
-                            <p>Modern, scalable WordPress development using native Gutenberg editor</p>
-                        </div>
-                        <div class="spec-card">
-                            <div class="spec-icon">
-                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <circle cx="8" cy="21" r="1"></circle>
-                                    <circle cx="19" cy="21" r="1"></circle>
-                                    <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
-                                </svg>
-                            </div>
-                            <h4>WooCommerce Solutions</h4>
-                            <p>Advanced e-commerce customizations and white-label solutions for agencies</p>
-                        </div>
-                    </div>
-                </div>
+            <div class="project-links">
+              <a href="https://kannankandyestore.com/" class="project-link">Live Demo</a>
             </div>
-        </section>
-
-        <!-- Projects Section -->
-        <section id="projects" class="section bg-card">
-            <div class="container">
-                <div class="section-header">
-                    <h2 class="section-title">Featured Projects</h2>
-                    <p class="section-description">
-                        Showcasing high-performance WordPress solutions built with modern development practices and Gutenberg expertise
-                    </p>
-                </div>
-
-                <!-- Category Filter -->
-                <div class="project-filters">
-                    <button class="filter-btn active" data-filter="all">All</button>
-                    <button class="filter-btn" data-filter="ecommerce">E-Commerce</button>
-                    <button class="filter-btn" data-filter="corporate">Corporate</button>
-                    <button class="filter-btn" data-filter="portfolio">Portfolio</button>
-                    <button class="filter-btn" data-filter="blog">Blog</button>
-                    <button class="filter-btn" data-filter="agency">Agency Tool</button>
-                    <button class="filter-btn" data-filter="plugin">Plugin</button>
-                </div>
-
-                <!-- Projects Grid -->
-                <div class="projects-grid">
-                    <div class="project-card" data-category="ecommerce">
-                        <div class="project-image">
-                            <img src="/modern-ecommerce-website-with-clean-design.jpg" alt="E-Commerce Platform with WooCommerce">
-                            <div class="project-category">
-                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <circle cx="8" cy="21" r="1"></circle>
-                                    <circle cx="19" cy="21" r="1"></circle>
-                                    <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
-                                </svg>
-                                E-Commerce
-                            </div>
-                        </div>
-                        <div class="project-content">
-                            <h3 class="project-title">E-Commerce Platform with WooCommerce</h3>
-                            <p class="project-desc">High-performance e-commerce website built with custom WooCommerce extensions, advanced product filtering, and optimized checkout process. Achieved 95+ PageSpeed score.</p>
-                            <div class="project-tech">
-                                <h4>Technologies:</h4>
-                                <div class="tech-tags">
-                                    <span class="tech-tag">WordPress</span>
-                                    <span class="tech-tag">WooCommerce</span>
-                                    <span class="tech-tag">Custom PHP</span>
-                                    <span class="tech-tag">Gutenberg</span>
-                                    <span class="tech-tag">Performance Optimization</span>
-                                </div>
-                            </div>
-                            <div class="project-features">
-                                <h4>Key Features:</h4>
-                                <ul>
-                                    <li>Custom Payment Gateway</li>
-                                    <li>Advanced Product Filters</li>
-                                    <li>Mobile-First Design</li>
-                                    <li>SEO Optimized</li>
-                                </ul>
-                            </div>
-                            <div class="project-actions">
-                                <a href="#" class="btn btn-primary">
-                                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="m7 7 10 10-5 1z"></path>
-                                        <path d="m18 13 1 5-10-10z"></path>
-                                        <path d="m7 17 5-5"></path>
-                                    </svg>
-                                    Live Demo
-                                </a>
-                                <a href="#" class="btn btn-outline">
-                                    <svg class="icon" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-                                    </svg>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Additional project cards would follow the same pattern -->
-                    <!-- For brevity, I'll add placeholders for the other 5 projects -->
-                    <div class="project-card" data-category="corporate">
-                        <div class="project-image">
-                            <img src="/corporate-website-modern.png" alt="Corporate Website with Gutenberg Blocks">
-                            <div class="project-category">
-                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <rect width="7" height="9" x="3" y="3" rx="1"></rect>
-                                    <rect width="7" height="5" x="14" y="3" rx="1"></rect>
-                                    <rect width="7" height="9" x="14" y="12" rx="1"></rect>
-                                    <rect width="7" height="5" x="3" y="16" rx="1"></rect>
-                                </svg>
-                                Corporate
-                            </div>
-                        </div>
-                        <div class="project-content">
-                            <h3 class="project-title">Corporate Website with Gutenberg Blocks</h3>
-                            <p class="project-desc">Modern corporate website featuring custom Gutenberg blocks, dynamic content management, and exceptional Core Web Vitals performance.</p>
-                            <!-- Similar structure as above project -->
-                        </div>
-                    </div>
-
-                    <!-- Continue with other projects... -->
-                </div>
-
-                <!-- Call to Action -->
-                <div class="projects-cta">
-                    <div class="cta-content">
-                        <h3>Ready to Start Your Project?</h3>
-                        <p>Let's discuss how I can help you build a high-performance WordPress website that delivers exceptional results and user experience.</p>
-                        <div class="cta-buttons">
-                            <a href="#contact" class="btn btn-primary">Start a Project</a>
-                            <a href="#" class="btn btn-outline">View All Work</a>
-                        </div>
-                    </div>
-                </div>
+          </div>
+        </div>
+  
+        <!-- Project 2 -->
+        <div class="project-card">
+          <div class="project-image">
+            <img src="images/emiratesscents.png" alt="Perfume Store" class="project-img">
+          </div>
+          <div class="project-content">
+            <h3>Perfume Store</h3>
+            <p>B2B solution with advanced customizations.</p>
+            <div class="project-tech">
+              <span>WordPress</span>
+              <span>Gutenberg</span>
+              <span>CSS3</span>
             </div>
-        </section>
-
-        <!-- Contact Section -->
-        <section id="contact" class="section">
-            <div class="container">
-                <div class="section-header">
-                    <h2 class="section-title">Let's Work Together</h2>
-                    <p class="section-description">
-                        Ready to build a high-performance WordPress website? I'm available for remote, contract-based work.
-                    </p>
-                </div>
-
-                <div class="contact-grid">
-                    <!-- Contact Form -->
-                    <div class="contact-form-card">
-                        <div class="card-header">
-                            <h3 class="card-title">
-                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                                </svg>
-                                Send a Message
-                            </h3>
-                            <p>Tell me about your project and let's discuss how I can help you achieve your goals.</p>
-                        </div>
-                        <form class="contact-form" id="contactForm">
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="name">Name *</label>
-                                    <input type="text" id="name" name="name" required placeholder="Your full name">
-                                </div>
-                                <div class="form-group">
-                                    <label for="email">Email *</label>
-                                    <input type="email" id="email" name="email" required placeholder="your.email@example.com">
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label for="subject">Subject *</label>
-                                <input type="text" id="subject" name="subject" required placeholder="Project inquiry, consultation, etc.">
-                            </div>
-                            <div class="form-group">
-                                <label for="message">Message *</label>
-                                <textarea id="message" name="message" rows="6" required placeholder="Tell me about your project, timeline, budget, and any specific requirements..."></textarea>
-                            </div>
-                            <button type="submit" class="btn btn-primary btn-full">
-                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="m22 2-7 20-4-9-9-4Z"></path>
-                                    <path d="M22 2 11 13"></path>
-                                </svg>
-                                Send Message
-                            </button>
-                        </form>
-                    </div>
-
-                    <!-- Contact Information -->
-                    <div class="contact-info">
-                        <!-- Contact Details -->
-                        <div class="contact-cards">
-                            <div class="contact-card">
-                                <div class="contact-icon">
-                                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="m4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                                        <polyline points="22,6 12,13 2,6"></polyline>
-                                    </svg>
-                                </div>
-                                <div class="contact-details">
-                                    <h4>Email</h4>
-                                    <p class="contact-value">shibin@example.com</p>
-                                    <p class="contact-desc">Send me an email anytime</p>
-                                </div>
-                            </div>
-
-                            <div class="contact-card">
-                                <div class="contact-icon">
-                                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path>
-                                        <circle cx="12" cy="10" r="3"></circle>
-                                    </svg>
-                                </div>
-                                <div class="contact-details">
-                                    <h4>Location</h4>
-                                    <p class="contact-value">Remote Worldwide</p>
-                                    <p class="contact-desc">Available for remote work only</p>
-                                </div>
-                            </div>
-
-                            <div class="contact-card">
-                                <div class="contact-icon">
-                                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <circle cx="12" cy="12" r="10"></circle>
-                                        <polyline points="12,6 12,12 16,14"></polyline>
-                                    </svg>
-                                </div>
-                                <div class="contact-details">
-                                    <h4>Response Time</h4>
-                                    <p class="contact-value">Within 24 hours</p>
-                                    <p class="contact-desc">I'll get back to you quickly</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Services -->
-                        <div class="services-card">
-                            <h3>Services I Offer</h3>
-                            <div class="services-list">
-                                <div class="service-item">WordPress Development</div>
-                                <div class="service-item">Gutenberg Block Development</div>
-                                <div class="service-item">WooCommerce Customization</div>
-                                <div class="service-item">Performance Optimization</div>
-                                <div class="service-item">White-label Solutions</div>
-                                <div class="service-item">Technical Consulting</div>
-                            </div>
-                        </div>
-
-                        <!-- Availability -->
-                        <div class="availability-card">
-                            <h3>Current Availability</h3>
-                            <div class="availability-badge">Available Now</div>
-                            <p>I'm currently accepting new projects and available for remote, contract-based work.</p>
-                            <div class="social-links">
-                                <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer">
-                                    <svg class="icon" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-                                    </svg>
-                                </a>
-                                <a href="https://github.com" target="_blank" rel="noopener noreferrer">
-                                    <svg class="icon" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-                                    </svg>
-                                </a>
-                                <a href="mailto:shibin@example.com">
-                                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="m4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                                        <polyline points="22,6 12,13 2,6"></polyline>
-                                    </svg>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Footer -->
-                <div class="footer">
-                    <p>&copy; 2025 Shibin Abdulla. WordPress Developer & Gutenberg Specialist.</p>
-                    <p>Built with modern web technologies and optimized for performance.</p>
-                </div>
+            <div class="project-links">
+              <a href="https://emiratesscents.com/" class="project-link">Live Demo</a>
             </div>
-        </section>
-    </main>
+          </div>
+        </div>
+  
+        <!-- Project 3 -->
+        <div class="project-card">
+          <div class="project-image">
+            <img src="images/portfolio-website.png" alt="Portfolio Website" class="project-img">
+          </div>
+          <div class="project-content">
+            <h3>Personal Portfolio</h3>
+            <p>My Web Development Portfolio website.</p>
+            <div class="project-tech">
+              <span>HTML</span>
+              <span>CSS3</span>
+              <span>V0</span>
+            </div>
+            <div class="project-links">
+              <a href="https://abdullashibin.github.io/" class="project-link">Live Demo</a>
+            </div>
+          </div>
+        </div>
+  
+      </div>
+    </div>
+  </section>
+  
 
-    <script src="script.js"></script>
+    <!-- Contact Section -->
+    <section id="contact" class="contact">
+        <div class="container">
+            <h2 class="section-title">Get In Touch</h2>
+            <div class="contact-content">
+                <div class="contact-info">
+                    <p>
+                        Available for remote, contract-based WordPress development projects. 
+                        Let's discuss how I can help bring your vision to life.
+                    </p>
+                    <div class="contact-details">
+                        <div class="contact-item">
+                            <i class="fas fa-envelope"></i>
+                            <a href="mailto:shibin71@outlook.com">shibin71@outlook.com</a>
+                        </div>
+                        <div class="contact-item">
+                            <i class="fab fa-linkedin"></i>
+                            <span>linkedin.com/in/shibin-abdulla</span>
+                        </div>
+                        <div class="contact-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>Kerala, India</span>
+                        </div>
+                    </div>
+                </div>
+                <form action="https://formspree.io/f/mdklpbwd" method="POST" class="contact-form">
+                    <div class="form-group">
+                      <input type="text" name="name" placeholder="Your Name" required>
+                    </div>
+                    <div class="form-group">
+                      <input type="email" name="email" placeholder="Your Email" required>
+                    </div>
+                    <div class="form-group">
+                      <input type="text" name="subject" placeholder="Subject" required>
+                    </div>
+                    <div class="form-group">
+                      <textarea name="message" placeholder="Your Message" rows="5" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Send Message</button>
+                  </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <p>&copy; 2025 Shibin Abdulla. All rights reserved.</p>
+                <p>Designed and Coded with <span class="highlight">❤️</span></p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/images/script.js"></script>
 </body>
 </html>

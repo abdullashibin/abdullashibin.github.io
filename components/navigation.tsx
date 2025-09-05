@@ -21,8 +21,9 @@ export function Navigation() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex-shrink-0">
-            /* Changed logo color to use bright orange primary color */
-            <h1 className="text-xl font-bold text-primary">Shibin Abdulla</h1>
+            <h1 className="text-xl font-bold" style={{ color: "var(--orange-accent)" }}>
+              Shibin Abdulla
+            </h1>
           </div>
 
           {/* Desktop Navigation */}
@@ -32,8 +33,7 @@ export function Navigation() {
                 <a
                   key={item.name}
                   href={item.href}
-                  /* Changed hover color to use bright orange primary */
-                  className="text-foreground hover:text-primary transition-colors duration-200 px-3 py-2 text-sm font-medium"
+                  className="text-foreground transition-colors duration-200 px-3 py-2 text-sm font-medium hover:text-[var(--orange-accent)]"
                 >
                   {item.name}
                 </a>
@@ -47,8 +47,7 @@ export function Navigation() {
               variant="ghost"
               size="sm"
               onClick={() => setIsOpen(!isOpen)}
-              /* Changed mobile menu button hover to bright orange */
-              className="text-foreground hover:text-primary"
+              className="text-foreground hover:text-[var(--orange-accent)]"
             >
               {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </Button>
@@ -63,8 +62,7 @@ export function Navigation() {
                 <a
                   key={item.name}
                   href={item.href}
-                  /* Changed mobile nav hover to bright orange */
-                  className="text-foreground hover:text-primary block px-3 py-2 text-base font-medium transition-colors duration-200"
+                  className="text-foreground hover:text-[var(--orange-accent)] block px-3 py-2 text-base font-medium transition-colors duration-200"
                   onClick={() => setIsOpen(false)}
                 >
                   {item.name}

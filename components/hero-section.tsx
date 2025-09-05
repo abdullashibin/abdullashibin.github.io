@@ -12,7 +12,7 @@ export function HeroSection() {
           {/* Main heading */}
           <div className="space-y-4">
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground text-balance">
-              Hi, I'm <span className="text-primary">Shibin Abdulla</span>
+              Hi, I'm <span style={{ color: "var(--orange-accent)" }}>Shibin Abdulla</span>
             </h1>
             <h2 className="text-xl sm:text-2xl lg:text-3xl text-muted-foreground text-balance">
               WordPress Developer & Gutenberg Specialist
@@ -49,7 +49,7 @@ export function HeroSection() {
               href="https://github.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-muted-foreground hover:text-primary transition-colors duration-200"
+              className="text-muted-foreground hover:text-[var(--orange-accent)] transition-colors duration-200"
             >
               <Github className="h-6 w-6" />
               <span className="sr-only">GitHub</span>
@@ -58,14 +58,14 @@ export function HeroSection() {
               href="https://linkedin.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-muted-foreground hover:text-primary transition-colors duration-200"
+              className="text-muted-foreground hover:text-[var(--orange-accent)] transition-colors duration-200"
             >
               <Linkedin className="h-6 w-6" />
               <span className="sr-only">LinkedIn</span>
             </a>
             <a
               href="mailto:shibin@example.com"
-              className="text-muted-foreground hover:text-primary transition-colors duration-200"
+              className="text-muted-foreground hover:text-[var(--orange-accent)] transition-colors duration-200"
             >
               <Mail className="h-6 w-6" />
               <span className="sr-only">Email</span>
@@ -76,7 +76,8 @@ export function HeroSection() {
           <div className="pt-12">
             <div className="animate-bounce">
               <svg
-                className="w-6 h-6 text-primary mx-auto"
+                className="w-6 h-6 mx-auto"
+                style={{ color: "var(--orange-accent)" }}
                 fill="none"
                 strokeLinecap="round"
                 strokeLinejoin="round"

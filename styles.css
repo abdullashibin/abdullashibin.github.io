@@ -717,3 +717,33 @@ body {
     padding: 10px 20px;
   }
 }
+
+
+
+.whatsapp-float {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 999;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+  transition: transform 0.3s ease;
+  text-decoration: none; /* prevents underline in some cases */
+}
+
+.whatsapp-float i {
+  display: block;
+  font-size: 40px;
+  color: #25D366;
+  line-height: 1;
+}
+
+.whatsapp-float:hover {
+  transform: scale(1.1);
+}

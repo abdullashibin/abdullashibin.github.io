@@ -2,111 +2,139 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=240, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Gemini Chat</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       background: #090d16;
       color: #ffffff;
-      font-family: sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       height: 100vh;
+      width: 100vw;
+      max-width: 240px;
+      margin: 0 auto;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       overflow: hidden;
-      font-size: 13px;
+      font-size: 12px;
     }
+
     header {
       width: 100%;
       background: #111827;
       color: #60a5fa;
-      font-size: 12px;
+      font-size: 11px;
       font-weight: bold;
-      padding: 6px 8px;
+      padding: 5px 6px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       border-bottom: 1px solid #1f2937;
       flex-shrink: 0;
     }
-    header .status-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: #10b981;
-      display: inline-block;
-      margin-right: 4px;
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 10px;
+      padding: 1px 4px;
+      border-radius: 3px;
     }
+    .badge-ok { background: #064e3b; color: #6ee7b7; }
+    .badge-err { background: #7f1d1d; color: #fca5a5; }
+
     #setup-screen {
       flex: 1;
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      padding: 12px;
+      padding: 12px 8px;
       text-align: center;
+      gap: 8px;
     }
+
     #chat-screen {
       flex: 1;
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      height: calc(100vh - 54px);
+      height: calc(100vh - 48px);
     }
+
     .hidden { display: none !important; }
-    input[type="password"], input[type="text"] {
+
+    input[type="text"], input[type="password"] {
       background: #030712;
       color: #ffffff;
       border: 1px solid #3b82f6;
       border-radius: 4px;
-      padding: 6px 8px;
-      font-size: 13px;
+      padding: 6px 6px;
+      font-size: 12px;
       outline: none;
+      width: 100%;
     }
+    input:focus, button:focus {
+      outline: 2px solid #38bdf8 !important;
+      border-color: #60a5fa !important;
+    }
+
     #chat-messages {
       flex: 1;
       overflow-y: auto;
-      padding: 8px 6px;
+      padding: 6px 4px;
       display: flex;
       flex-direction: column;
       gap: 6px;
       scroll-behavior: smooth;
     }
+
     .msg {
-      padding: 6px 8px;
-      border-radius: 8px;
-      max-width: 90%;
-      line-height: 1.35;
+      padding: 5px 7px;
+      border-radius: 6px;
+      max-width: 92%;
+      line-height: 1.3;
       font-size: 12px;
       word-break: break-word;
     }
+
     .msg.user {
       background: #2563eb;
       color: #ffffff;
       align-self: flex-end;
       border-bottom-right-radius: 2px;
     }
+
     .msg.gemini {
       background: #1e293b;
-      color: #e2e8f0;
+      color: #f1f5f9;
       align-self: flex-start;
       border-bottom-left-radius: 2px;
       border: 1px solid #334155;
     }
-    .msg.voice-tag {
+
+    .msg.error {
+      background: #450a0a;
+      color: #fca5a5;
+      border: 1px solid #991b1b;
+      align-self: center;
+      font-size: 11px;
+    }
+
+    .voice-tag {
       font-size: 10px;
       color: #93c5fd;
-      margin-bottom: 2px;
       display: block;
+      margin-bottom: 2px;
     }
+
     #status-banner {
-      font-size: 11px;
-      color: #93c5fd;
-      background: #0f172a;
+      font-size: 10px;
       padding: 3px 6px;
       text-align: center;
-      border-top: 1px solid #1e293b;
       display: none;
       flex-shrink: 0;
     }
@@ -115,30 +143,29 @@
       background: #7f1d1d;
       color: #fecaca;
       font-weight: bold;
-      animation: pulse 1s infinite alternate;
     }
     #status-banner.thinking {
       display: block;
       background: #3b0764;
       color: #e9d5ff;
     }
-    @keyframes pulse {
-      from { opacity: 0.8; }
-      to { opacity: 1; }
-    }
-    #input-bar {
+
+    #chat-form {
       display: flex;
-      padding: 4px;
+      padding: 3px 4px;
       background: #0f172a;
       border-top: 1px solid #1f2937;
-      gap: 4px;
+      gap: 3px;
       flex-shrink: 0;
+      align-items: center;
     }
+
     #prompt-input {
       flex: 1;
       height: 28px;
     }
-    #send-btn, #voice-btn {
+
+    .btn {
       background: #2563eb;
       color: #ffffff;
       border: none;
@@ -148,75 +175,107 @@
       font-weight: bold;
       height: 28px;
       cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
     }
+    .btn:active { background: #1d4ed8; }
+
     #voice-btn {
       background: #059669;
+      padding: 0 6px;
     }
     #voice-btn.recording {
       background: #dc2626;
-      animation: pulse 0.8s infinite alternate;
     }
+
     footer {
       width: 100%;
       background: #030712;
       color: #9ca3af;
-      font-size: 11px;
+      font-size: 10px;
       font-weight: bold;
-      padding: 4px 6px;
+      padding: 3px 4px;
       display: flex;
       justify-content: space-between;
       border-top: 1px solid #1f2937;
       flex-shrink: 0;
     }
+    .hint-col { text-align: center; flex: 1; }
+    .hint-left { text-align: left; }
+    .hint-right { text-align: right; }
     .hi { color: #ffffff; }
   </style>
 </head>
 <body>
 
+  <!-- Top Bar -->
   <header>
-    <div><span class="status-dot"></span>GEMINI AI</div>
-    <div style="font-size: 10px; color: #94a3b8;" id="model-tag">Flash 2.5</div>
+    <div><b>GEMINI AI</b> <span id="model-tag" style="font-size: 9px; color: #94a3b8;">[3.5-Lite]</span></div>
+    <div id="key-badge" class="status-badge badge-err">No Key</div>
   </header>
 
-  <!-- SCREEN 1: ONE-TIME KEY SETUP -->
-  <div id="setup-screen">
-    <div style="font-size: 13px; color: #cbd5e1; margin-bottom: 8px;">Enter Gemini API Key:</div>
-    <input id="key-input" type="password" placeholder="AIzaSy..." autocomplete="off" style="width: 100%;">
-    <div style="font-size: 10px; color: #9ca3af; margin-top: 8px;">
-      Tip: Load URL with #key=AIza... to save automatically.
+  <!-- Setup Screen: Shown only if API Key is missing -->
+  <div id="setup-screen" class="hidden">
+    <div style="font-size: 12px; font-weight: bold; color: #e2e8f0;">Gemini API Key Required</div>
+    <form id="setup-form" style="width: 100%; display: flex; flex-direction: column; gap: 6px;">
+      <input id="key-input" type="text" placeholder="Paste AIzaSy... here" autocomplete="off">
+      <button type="submit" class="btn" style="width: 100%; height: 30px;">SAVE KEY (OK)</button>
+    </form>
+    <div style="font-size: 10px; color: #94a3b8; line-height: 1.2;">
+      Tip: Open URL as:<br>
+      <code style="color: #60a5fa; font-size: 9px;">.../live/#key=AIza...</code>
     </div>
   </div>
 
-  <!-- SCREEN 2: FEATURE-PHONE CHAT -->
-  <div id="chat-screen" class="hidden">
+  <!-- Chat Screen -->
+  <div id="chat-screen">
     <div id="chat-messages">
-      <div class="msg gemini">Hello! Ask me anything, or press <b>*</b> / <b>Mic</b> to voice type.</div>
+      <div class="msg gemini">
+        <b>Welcome!</b> Type a message and press <b>Send</b> (or <b>OK</b>). You can also press <b>🎙️</b> to speak.
+      </div>
     </div>
-    
+
     <div id="status-banner"></div>
 
-    <div id="input-bar">
-      <button id="voice-btn" title="Voice Typing (*)">🎙️</button>
-      <input id="prompt-input" type="text" placeholder="Type or speak..." autocomplete="off">
-      <button id="send-btn">OK</button>
-    </div>
+    <!-- Wrapped in a true HTML Form so Enter on keypad natively triggers submit -->
+    <form id="chat-form" action="javascript:void(0);">
+      <button type="button" id="voice-btn" class="btn" title="Voice Typing">🎙️</button>
+      <input id="prompt-input" type="text" placeholder="Type prompt..." autocomplete="off">
+      <button type="submit" id="send-btn" class="btn">Send</button>
+    </form>
   </div>
 
+  <!-- Soft Key & D-Pad Hints (CloudPhone Design Standard) -->
   <footer>
-    <span id="left-hint">Voice (*)</span>
-    <span id="center-hint" class="hi">Send (OK)</span>
-    <span id="right-hint">New (#)</span>
+    <div id="left-hint" class="hint-col hint-left">LSK: Voice</div>
+    <div id="center-hint" class="hint-col">OK: Send</div>
+    <div id="right-hint" class="hint-col hint-right">#: New</div>
   </footer>
 
   <script>
-    // Fast, lightweight, highly reliable REST endpoint
-    const MODEL = "gemini-2.5-flash";
-    const STORAGE_KEY = "hmd_gemini_live_key";
+    // Candidate Models: Try fast modern 3.5-flash-lite first, fallback to 3.6-flash, 2.5-flash, or 1.5-flash
+    const CANDIDATE_MODELS = [
+      "gemini-3.5-flash-lite",
+      "gemini-3.6-flash",
+      "gemini-2.5-flash",
+      "gemini-1.5-flash"
+    ];
+    let currentModelIndex = 0;
 
+    const STORAGE_KEY = "hmd_gemini_api_key";
+    let apiKey = "";
+
+    // DOM Elements
     const setupScreen = document.getElementById("setup-screen");
     const chatScreen = document.getElementById("chat-screen");
+    const setupForm = document.getElementById("setup-form");
     const keyInput = document.getElementById("key-input");
+    const keyBadge = document.getElementById("key-badge");
+    const modelTag = document.getElementById("model-tag");
     const chatMessages = document.getElementById("chat-messages");
+    const chatForm = document.getElementById("chat-form");
     const promptInput = document.getElementById("prompt-input");
     const sendBtn = document.getElementById("send-btn");
     const voiceBtn = document.getElementById("voice-btn");
@@ -225,45 +284,57 @@
     const centerHint = document.getElementById("center-hint");
     const rightHint = document.getElementById("right-hint");
 
-    // Auto-save key from URL Hash (#key=...) or Query Param (?key=...)
-    const hashMatch = window.location.hash.match(/key=([^&]+)/);
-    const searchMatch = window.location.search.match(/[?&]key=([^&]+)/);
-    const foundKey = (hashMatch && hashMatch[1]) || (searchMatch && searchMatch[1]);
-    if (foundKey) {
-      localStorage.setItem(STORAGE_KEY, decodeURIComponent(foundKey));
-      history.replaceState(null, "", window.location.pathname);
+    // Initialize API Key from URL Hash, Query Param, or LocalStorage
+    function initApiKey() {
+      const hashMatch = window.location.hash.match(/key=([^&]+)/);
+      const searchMatch = window.location.search.match(/[?&]key=([^&]+)/);
+      const keyFromUrl = (hashMatch && hashMatch[1]) || (searchMatch && searchMatch[1]);
+
+      if (keyFromUrl) {
+        apiKey = decodeURIComponent(keyFromUrl).trim();
+        try { localStorage.setItem(STORAGE_KEY, apiKey); } catch (e) {}
+      } else {
+        try { apiKey = localStorage.getItem(STORAGE_KEY) || ""; } catch (e) { apiKey = ""; }
+      }
+      renderScreenState();
     }
 
-    let apiKey = localStorage.getItem(STORAGE_KEY) || "";
-    let conversationHistory = [];
-    let isProcessing = false;
-
-    // Voice typing recording state
-    let isRecordingVoice = false;
-    let micStream = null;
-    let audioCtx = null;
-    let processor = null;
-    let recordedPcmChunks = [];
-    let recordedPcmLength = 0;
-    let recordingTimeout = null;
-
-    function updateScreen() {
-      if (!apiKey) {
-        setupScreen.classList.remove("hidden");
-        chatScreen.classList.add("hidden");
-        leftHint.textContent = "Clear";
-        centerHint.textContent = "OK: SAVE";
-        rightHint.textContent = "";
-        keyInput.focus();
-      } else {
+    function renderScreenState() {
+      if (apiKey) {
+        keyBadge.className = "status-badge badge-ok";
+        keyBadge.textContent = "Key: OK";
         setupScreen.classList.add("hidden");
         chatScreen.classList.remove("hidden");
-        leftHint.textContent = isRecordingVoice ? "Cancel" : "Voice (*)";
-        centerHint.textContent = isRecordingVoice ? "Done (OK)" : "Send (OK)";
-        rightHint.textContent = "New (#)";
+        leftHint.textContent = isRecordingVoice ? "Cancel" : "LSK: Mic";
+        centerHint.textContent = isRecordingVoice ? "OK: Done" : "OK: Send";
+        rightHint.textContent = "#: New";
         promptInput.focus();
+      } else {
+        keyBadge.className = "status-badge badge-err";
+        keyBadge.textContent = "No Key";
+        chatScreen.classList.add("hidden");
+        setupScreen.classList.remove("hidden");
+        leftHint.textContent = "";
+        centerHint.textContent = "OK: Save";
+        rightHint.textContent = "";
+        keyInput.focus();
       }
+      modelTag.textContent = "[" + CANDIDATE_MODELS[currentModelIndex].replace("gemini-", "") + "]";
     }
+
+    // Save key from form submit
+    setupForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const val = keyInput.value.trim();
+      if (val) {
+        apiKey = val;
+        try { localStorage.setItem(STORAGE_KEY, apiKey); } catch (err) {}
+        renderScreenState();
+      }
+    });
+
+    let conversationHistory = [];
+    let isProcessing = false;
 
     function appendMessage(role, text, isVoice = false) {
       const msgEl = document.createElement("div");
@@ -279,9 +350,131 @@
       msgEl.appendChild(textNode);
       chatMessages.appendChild(msgEl);
       chatMessages.scrollTop = chatMessages.scrollHeight;
+      return msgEl;
     }
 
-    // High performance linear downsampling Float32 -> 16kHz PCM
+    // Primary send function with automatic model fallback
+    async function sendPromptToGemini(contentsPayload, displayUserText = null, isVoice = false) {
+      if (!apiKey) {
+        appendMessage("error", "No API key found. Enter key on setup screen.");
+        renderScreenState();
+        return;
+      }
+      if (isProcessing) return;
+      isProcessing = true;
+
+      if (displayUserText) {
+        appendMessage("user", displayUserText, isVoice);
+      }
+
+      statusBanner.className = "thinking";
+      statusBanner.textContent = "Thinking...";
+
+      let success = false;
+      let lastErrorMessage = "";
+
+      // Loop through candidate models if 404 (not found) occurs
+      for (let i = currentModelIndex; i < CANDIDATE_MODELS.length; i++) {
+        const modelName = CANDIDATE_MODELS[i];
+        modelTag.textContent = "[" + modelName.replace("gemini-", "") + "]";
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+
+        try {
+          const res = await fetch(endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: contentsPayload,
+              systemInstruction: {
+                parts: [{
+                  text: "You are a concise, helpful AI assistant for a user on a compact 240x320 feature phone keypad. Keep answers concise, factual, and easy to read."
+                }]
+              }
+            })
+          });
+
+          const data = await res.json();
+
+          if (res.ok && data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
+            const reply = data.candidates[0].content.parts[0].text;
+            appendMessage("gemini", reply);
+            conversationHistory.push({
+              role: "model",
+              parts: [{ text: reply }]
+            });
+            currentModelIndex = i; // Lock into working model
+            success = true;
+            break;
+          } else if (data.error) {
+            lastErrorMessage = data.error.message || `Error ${res.status}`;
+            // If model is not found or unsupported, fallback to next
+            if (data.error.code === 404 || lastErrorMessage.toLowerCase().includes("not found")) {
+              console.warn(`Model ${modelName} not found, falling back...`);
+              continue;
+            } else {
+              // Authentication error, quota error, etc.
+              appendMessage("error", `API Error (${data.error.code || res.status}): ${lastErrorMessage}`);
+              success = true;
+              break;
+            }
+          } else {
+            lastErrorMessage = `HTTP ${res.status} empty response`;
+          }
+        } catch (fetchErr) {
+          lastErrorMessage = "Network error: " + fetchErr.message;
+          break;
+        }
+      }
+
+      if (!success) {
+        appendMessage("error", "Failed: " + lastErrorMessage);
+      }
+
+      isProcessing = false;
+      statusBanner.className = "";
+      statusBanner.textContent = "";
+      promptInput.focus();
+    }
+
+    // Form submit handler (invoked by Enter, OK key, or clicking Send)
+    chatForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      handleSendText();
+    });
+
+    function handleSendText() {
+      const text = promptInput.value.trim();
+      if (!text || isProcessing) return;
+      promptInput.value = "";
+
+      conversationHistory.push({
+        role: "user",
+        parts: [{ text: text }]
+      });
+
+      sendPromptToGemini([...conversationHistory], text, false);
+    }
+
+    function clearChat() {
+      conversationHistory = [];
+      chatMessages.innerHTML = `
+        <div class="msg gemini">
+          <b>New chat started.</b> Type a message or press <b>🎙️</b> to voice type.
+        </div>
+      `;
+      promptInput.value = "";
+      promptInput.focus();
+    }
+
+    // VOICE TYPING ENGINE (16kHz PCM downsampled WAV)
+    let isRecordingVoice = false;
+    let micStream = null;
+    let audioCtx = null;
+    let processor = null;
+    let recordedPcmChunks = [];
+    let recordedPcmLength = 0;
+    let recordingTimeout = null;
+
     function downsampleFloat32(source, fromRate, toRate) {
       if (fromRate === toRate) return source;
       const ratio = fromRate / toRate;
@@ -297,7 +490,6 @@
       return target;
     }
 
-    // Convert recorded PCM to standard WAV Base64
     function pcmToWavBase64(pcmBytes, sampleRate = 16000) {
       const numChannels = 1;
       const bitsPerSample = 16;
@@ -333,85 +525,19 @@
       return btoa(binary);
     }
 
-    // Call Gemini 2.5 Flash over plain HTTPS REST (Ultra-reliable on CloudPhone)
-    async function sendPromptToGemini(contentsPayload, displayUserText = null, isVoice = false) {
-      if (isProcessing) return;
-      isProcessing = true;
-
-      if (displayUserText) {
-        appendMessage("user", displayUserText, isVoice);
-      }
-
-      statusBanner.className = "thinking";
-      statusBanner.textContent = "Gemini is thinking...";
-
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${apiKey}`;
-
-      try {
-        const res = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: contentsPayload,
-            systemInstruction: {
-              parts: [{
-                text: "You are a concise, smart AI assistant for a user on a compact 240x320 feature phone keypad. Answer clearly, accurately, and keep answers concise and easy to read without unnecessary fluff."
-              }]
-            }
-          })
-        });
-
-        const data = await res.json();
-
-        if (data.error) {
-          appendMessage("gemini", "Error: " + (data.error.message || "Failed to get reply."));
-        } else {
-          const replyText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (replyText) {
-            appendMessage("gemini", replyText);
-            // Save to history for multi-turn conversation
-            conversationHistory.push({
-              role: "model",
-              parts: [{ text: replyText }]
-            });
-          } else {
-            appendMessage("gemini", "No response received.");
-          }
-        }
-      } catch (err) {
-        appendMessage("gemini", "Connection error: " + err.message);
-      } finally {
-        isProcessing = false;
-        statusBanner.className = "";
-        statusBanner.textContent = "";
-        promptInput.focus();
-      }
-    }
-
-    function handleSendText() {
-      const text = promptInput.value.trim();
-      if (!text || isProcessing) return;
-      promptInput.value = "";
-
-      // Add to conversation
-      conversationHistory.push({
-        role: "user",
-        parts: [{ text: text }]
-      });
-
-      sendPromptToGemini([...conversationHistory], text, false);
-    }
-
-    // VOICE TYPING: Record speech and let Gemini transcribe & answer directly!
     async function startVoiceRecording() {
       if (isRecordingVoice || isProcessing) return;
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        appendMessage("error", "Microphone access not available on this browser.");
+        return;
+      }
 
       try {
         statusBanner.className = "recording";
-        statusBanner.textContent = "🎙️ Listening... Speak now!";
+        statusBanner.textContent = "🎙️ Listening... Speak clearly!";
         voiceBtn.classList.add("recording");
         isRecordingVoice = true;
-        updateScreen();
+        renderScreenState();
 
         micStream = await navigator.mediaDevices.getUserMedia({
           audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true }
@@ -431,7 +557,6 @@
           const inputData = e.inputBuffer.getChannelData(0);
           const downsampled = downsampleFloat32(inputData, audioCtx.sampleRate, 16000);
 
-          // Convert Float32 to Int16 PCM
           const int16 = new Int16Array(downsampled.length);
           for (let i = 0; i < downsampled.length; i++) {
             const s = Math.max(-1, Math.min(1, downsampled[i]));
@@ -446,179 +571,137 @@
         micSource.connect(processor);
         processor.connect(audioCtx.destination);
 
-        // Auto stop after 7 seconds max to keep response fast
+        // Auto-stop after 8 seconds max
         recordingTimeout = setTimeout(() => {
           if (isRecordingVoice) stopVoiceRecordingAndSend();
-        }, 7000);
+        }, 8000);
 
       } catch (err) {
-        statusBanner.className = "";
-        statusBanner.textContent = "";
-        voiceBtn.classList.remove("recording");
-        isRecordingVoice = false;
-        appendMessage("gemini", "Mic error: " + err.message);
-        updateScreen();
+        cancelVoiceRecording();
+        appendMessage("error", "Mic error: " + err.message);
       }
+    }
+
+    function cancelVoiceRecording() {
+      if (recordingTimeout) clearTimeout(recordingTimeout);
+      isRecordingVoice = false;
+      if (processor) { processor.disconnect(); processor = null; }
+      if (audioCtx) { audioCtx.close(); audioCtx = null; }
+      if (micStream) { micStream.getTracks().forEach(t => t.stop()); micStream = null; }
+      voiceBtn.classList.remove("recording");
+      statusBanner.className = "";
+      statusBanner.textContent = "";
+      renderScreenState();
     }
 
     function stopVoiceRecordingAndSend() {
       if (!isRecordingVoice) return;
+      if (recordingTimeout) clearTimeout(recordingTimeout);
       isRecordingVoice = false;
-      if (recordingTimeout) { clearTimeout(recordingTimeout); recordingTimeout = null; }
 
-      voiceBtn.classList.remove("recording");
-      statusBanner.className = "thinking";
-      statusBanner.textContent = "Processing speech...";
-
-      // Clean up audio graph
       if (processor) { processor.disconnect(); processor = null; }
-      if (micStream) { micStream.getTracks().forEach(t => t.stop()); micStream = null; }
       if (audioCtx) { audioCtx.close(); audioCtx = null; }
+      if (micStream) { micStream.getTracks().forEach(t => t.stop()); micStream = null; }
+      voiceBtn.classList.remove("recording");
+      renderScreenState();
 
-      updateScreen();
-
-      if (recordedPcmLength < 3200) {
-        // Less than 0.1s of audio recorded
+      if (recordedPcmLength === 0) {
         statusBanner.className = "";
         statusBanner.textContent = "";
-        appendMessage("gemini", "Recording was too short. Speak after clicking Voice.");
         return;
       }
 
-      // Merge recorded PCM chunks
+      statusBanner.className = "thinking";
+      statusBanner.textContent = "Processing speech...";
+
+      // Combine audio chunks
       const combined = new Uint8Array(recordedPcmLength);
       let offset = 0;
-      for (let i = 0; i < recordedPcmChunks.length; i++) {
-        combined.set(recordedPcmChunks[i], offset);
-        offset += recordedPcmChunks[i].byteLength;
+      for (const chunk of recordedPcmChunks) {
+        combined.set(chunk, offset);
+        offset += chunk.byteLength;
       }
       recordedPcmChunks = [];
       recordedPcmLength = 0;
 
       const wavBase64 = pcmToWavBase64(combined, 16000);
 
-      // Send spoken audio directly to Gemini 2.5 Flash
-      const voiceTurn = {
-        role: "user",
-        parts: [
-          {
-            inlineData: {
-              mimeType: "audio/wav",
-              data: wavBase64
+      const voicePayload = [
+        ...conversationHistory,
+        {
+          role: "user",
+          parts: [
+            {
+              inlineData: {
+                mimeType: "audio/wav",
+                data: wavBase64
+              }
+            },
+            {
+              text: "Please transcribe my spoken audio and answer the question concisely."
             }
-          },
-          {
-            text: "Please transcribe the speech in this audio and answer it. Format as: '[Your Question]\\n\\n[Answer]'"
-          }
-        ]
-      };
+          ]
+        }
+      ];
 
-      conversationHistory.push(voiceTurn);
-      sendPromptToGemini([...conversationHistory], "🎙️ Voice message sent...", true);
+      sendPromptToGemini(voicePayload, "🎙️ [Spoken audio sent]", true);
     }
-
-    function cancelVoiceRecording() {
-      if (!isRecordingVoice) return;
-      isRecordingVoice = false;
-      if (recordingTimeout) { clearTimeout(recordingTimeout); recordingTimeout = null; }
-      voiceBtn.classList.remove("recording");
-      statusBanner.className = "";
-      statusBanner.textContent = "";
-      if (processor) { processor.disconnect(); processor = null; }
-      if (micStream) { micStream.getTracks().forEach(t => t.stop()); micStream = null; }
-      if (audioCtx) { audioCtx.close(); audioCtx = null; }
-      recordedPcmChunks = [];
-      recordedPcmLength = 0;
-      updateScreen();
-    }
-
-    function clearChat() {
-      conversationHistory = [];
-      chatMessages.innerHTML = "";
-      appendMessage("gemini", "Chat cleared. Ready for your next question!");
-      promptInput.value = "";
-      promptInput.focus();
-    }
-
-    // Button Click Listeners
-    sendBtn.addEventListener("click", () => {
-      if (isRecordingVoice) stopVoiceRecordingAndSend();
-      else handleSendText();
-    });
 
     voiceBtn.addEventListener("click", () => {
       if (isRecordingVoice) stopVoiceRecordingAndSend();
       else startVoiceRecording();
     });
 
-    // Feature-Phone Keypad Navigation
+    // CloudPhone Keypad Navigation Handling (Matching developer.cloudfone.com)
     document.addEventListener("keydown", (e) => {
       const key = e.key;
+      const keyCode = e.keyCode;
 
-      // SCREEN 1: Setup Key
-      if (!apiKey) {
-        if (key === "Enter" || key === "Accept") {
-          e.preventDefault();
-          const val = keyInput.value.trim();
-          if (val) {
-            apiKey = val;
-            localStorage.setItem(STORAGE_KEY, apiKey);
-            updateScreen();
-          }
-        } else if (key === "SoftLeft" || key === "F1") {
-          e.preventDefault();
-          keyInput.value = "";
+      // In CloudPhone: Left Soft Key (LSK) triggers 'Escape' (keyCode 27)
+      if (key === "Escape" || keyCode === 27 || key === "SoftLeft" || key === "F1") {
+        e.preventDefault();
+        if (isRecordingVoice) {
+          cancelVoiceRecording();
+        } else if (apiKey) {
+          startVoiceRecording();
         }
         return;
       }
 
-      // SCREEN 2: Chat screen controls
-      // Center Key (Enter / OK): Send message or Finish voice recording
-      if (key === "Enter" || key === "Accept") {
+      // Hash key (#): New Chat
+      if (key === "#" && !promptInput.value && !isRecordingVoice) {
         e.preventDefault();
-        if (isRecordingVoice) {
-          stopVoiceRecordingAndSend();
-        } else {
-          handleSendText();
-        }
+        clearChat();
+        return;
       }
-      // Star Key (*) or Left Soft Key: Toggle Voice Typing
-      else if (key === "*" || key === "SoftLeft" || key === "F1") {
+
+      // Star key (*): Toggle Voice Typing
+      if (key === "*" && !promptInput.value) {
         e.preventDefault();
-        if (isRecordingVoice) {
-          cancelVoiceRecording();
-        } else {
-          startVoiceRecording();
-        }
+        if (isRecordingVoice) stopVoiceRecordingAndSend();
+        else startVoiceRecording();
+        return;
       }
-      // Hash Key (#) or Right Soft Key (when input empty): New Chat
-      else if (key === "#" || ((key === "Escape" || key === "SoftRight" || key === "F2") && !promptInput.value)) {
+
+      // '0' key when input is not focused: Reset stored key
+      if (key === "0" && document.activeElement !== promptInput && document.activeElement !== keyInput) {
         e.preventDefault();
-        if (isRecordingVoice) {
-          cancelVoiceRecording();
-        } else {
-          clearChat();
-        }
-      }
-      // Scroll Up (Up Arrow)
-      else if (key === "ArrowUp") {
-        chatMessages.scrollTop -= 60;
-      }
-      // Scroll Down (Down Arrow)
-      else if (key === "ArrowDown") {
-        chatMessages.scrollTop += 60;
-      }
-      // Keypad '0' (when prompt input is completely empty): Reset API Key
-      else if (key === "0" && !promptInput.value && !isRecordingVoice && document.activeElement !== promptInput) {
-        e.preventDefault();
-        localStorage.removeItem(STORAGE_KEY);
+        try { localStorage.removeItem(STORAGE_KEY); } catch (err) {}
         apiKey = "";
-        keyInput.value = "";
-        updateScreen();
+        initApiKey();
+        return;
+      }
+
+      // D-Pad ArrowUp / ArrowDown scrolling when chat messages need reading
+      if (key === "ArrowUp" && document.activeElement !== promptInput && document.activeElement !== keyInput) {
+        chatMessages.scrollTop -= 50;
+      } else if (key === "ArrowDown" && document.activeElement !== promptInput && document.activeElement !== keyInput) {
+        chatMessages.scrollTop += 50;
       }
     });
 
-    updateScreen();
+    // Initialize on load
+    initApiKey();
   </script>
 </body>
 </html>

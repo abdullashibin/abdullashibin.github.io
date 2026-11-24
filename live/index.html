@@ -49,8 +49,8 @@
       outline: none;
     }
     #orb {
-      width: 88px;
-      height: 88px;
+      width: 86px;
+      height: 86px;
       border-radius: 50%;
       background: #1e293b;
       border: 4px solid #3b82f6;
@@ -59,7 +59,7 @@
       justify-content: center;
       font-size: 12px;
       font-weight: bold;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
       transition: all 0.2s;
     }
     #orb.listening {
@@ -72,6 +72,11 @@
       border-color: #60a5fa;
       box-shadow: 0 0 18px #3b82f6;
     }
+    #orb.thinking {
+      background: #581c87;
+      border-color: #a855f7;
+      box-shadow: 0 0 16px #a855f7;
+    }
     #orb.muted {
       background: #7f1d1d;
       border-color: #ef4444;
@@ -82,7 +87,7 @@
       line-height: 1.3;
       padding: 0 4px;
       word-break: break-word;
-      max-height: 48px;
+      max-height: 52px;
       overflow: hidden;
     }
     footer {
@@ -125,7 +130,6 @@
   </footer>
 
   <script>
-    // Gemini 3.8 Live is Google's active Live API model
     const MODEL = "models/gemini-3.8-live";
     const STORAGE_KEY = "hmd_gemini_live_key";
 
@@ -159,6 +163,10 @@
     let nextPlayTime = 0;
     let activeSources = [];
 
+    // Hybrid VAD (detect speech vs silence)
+    let isSpeaking = false;
+    let silenceTimer = null;
+
     function updateScreen() {
       if (!apiKey) {
         setupScreen.classList.remove("hidden");
@@ -176,6 +184,7 @@
       }
     }
 
+    // High performance Resample & Convert Float32 to 16-bit PCM Base64
     function downsampleAndConvert16BitPCM(inputData, inputSampleRate) {
       const targetRate = 16000;
       let samples;
@@ -203,8 +212,9 @@
 
       let binary = "";
       const bytes = new Uint8Array(buffer);
-      for (let i = 0; i < bytes.byteLength; i++) {
-        binary += String.fromCharCode(bytes[i]);
+      const chunkSize = 0x8000;
+      for (let i = 0; i < bytes.length; i += chunkSize) {
+        binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
       }
       return btoa(binary);
     }
@@ -222,14 +232,16 @@
       if (audioCtx.state === "suspended") audioCtx.resume();
 
       const binary = atob(base64Data);
-      const len = binary.length / 2;
-      const float32 = new Float32Array(len);
-      for (let i = 0; i < len; i++) {
-        const low = binary.charCodeAt(i * 2);
-        const high = binary.charCodeAt(i * 2 + 1);
-        let val = (high << 8) | low;
-        if (val >= 0x8000) val -= 0x10000;
-        float32[i] = val / 32768.0;
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+
+      const dataView = new DataView(bytes.buffer);
+      const sampleCount = Math.floor(bytes.byteLength / 2);
+      const float32 = new Float32Array(sampleCount);
+      for (let i = 0; i < sampleCount; i++) {
+        float32[i] = dataView.getInt16(i * 2, true) / 32768.0;
       }
 
       // Gemini Live outputs 24,000 Hz PCM audio
@@ -273,12 +285,12 @@
         if (audioCtx.state === "suspended") await audioCtx.resume();
         nextPlayTime = audioCtx.currentTime;
 
-        statusEl.textContent = "Connecting to Gemini...";
+        statusEl.textContent = "Connecting to Gemini 3.8...";
         ws = new WebSocket(wsUrl);
 
         ws.onopen = () => {
           statusEl.textContent = "Handshaking...";
-          // Setup message
+          // Setup message with audio transcription enabled
           ws.send(JSON.stringify({
             setup: {
               model: MODEL,
@@ -288,8 +300,10 @@
                   voiceConfig: { prebuiltVoiceConfig: { voiceName: "Puck" } }
                 }
               },
+              inputAudioTranscription: {},
+              outputAudioTranscription: {},
               systemInstruction: {
-                parts: [{ text: "You are on a real-time live phone call with a user on a feature phone. Be direct, natural, warm, and keep your responses short and concise." }]
+                parts: [{ text: "You are talking on a real-time live phone call with a user on a feature phone. Be direct, natural, warm, and keep replies short (1-2 sentences)." }]
               }
             }
           }));
@@ -300,7 +314,7 @@
           orb.className = "listening";
           orb.textContent = "CONNECTING";
 
-          // Persistent source node reference to prevent GC drops
+          // Audio graph with persistent reference
           micSourceNode = audioCtx.createMediaStreamSource(micStream);
           processor = audioCtx.createScriptProcessor(4096, 1, 1);
 
@@ -308,24 +322,53 @@
             if (!isConnected || !setupDone || isMuted || ws.readyState !== WebSocket.OPEN) return;
             const inputData = e.inputBuffer.getChannelData(0);
 
-            // Audio level detection to show voice activity
+            // Audio level detection for speech & silence tracking
             let sum = 0;
             for (let i = 0; i < inputData.length; i += 4) {
               sum += inputData[i] * inputData[i];
             }
             const rms = Math.sqrt(sum / (inputData.length / 4));
-            if (rms > 0.03 && activeSources.length === 0) {
-              statusEl.textContent = "Hearing you...";
+
+            // Hybrid VAD logic:
+            if (rms > 0.025) {
+              isSpeaking = true;
+              if (silenceTimer) {
+                clearTimeout(silenceTimer);
+                silenceTimer = null;
+              }
+              if (activeSources.length === 0) {
+                statusEl.textContent = "Hearing you...";
+              }
+            } else if (isSpeaking) {
+              if (!silenceTimer) {
+                // If user pauses for 750ms after talking, signal end-of-speech to force reply!
+                silenceTimer = setTimeout(() => {
+                  if (ws && ws.readyState === WebSocket.OPEN && activeSources.length === 0) {
+                    orb.className = "thinking";
+                    orb.textContent = "THINKING";
+                    statusEl.textContent = "Thinking...";
+                    ws.send(JSON.stringify({
+                      realtimeInput: { audioStreamEnd: true }
+                    }));
+                  }
+                  isSpeaking = false;
+                  silenceTimer = null;
+                }, 750);
+              }
             }
 
             const base64Pcm = downsampleAndConvert16BitPCM(inputData, audioCtx.sampleRate);
 
-            // Wire format: mediaChunks required by v1beta raw websocket
+            // Send payload formatted for Gemini 3.8 Live (both audio and mediaChunks for compatibility)
             ws.send(JSON.stringify({
               realtimeInput: {
+                audio: {
+                  data: base64Pcm,
+                  mimeType: "audio/pcm;rate=16000"
+                },
                 mediaChunks: [{
-                  mimeType: "audio/pcm;rate=16000",
-                  data: base64Pcm
+                  data: base64Pcm,
+                  mimeType: "audio/pcm;rate=16000"
                 }]
               }
             }));
@@ -347,23 +390,23 @@
 
           const msg = JSON.parse(text);
 
-          // Server error handling
+          // API Error
           if (msg.error) {
             statusEl.textContent = "Error: " + (msg.error.message || JSON.stringify(msg.error));
             console.error("Gemini Error:", msg.error);
             return;
           }
 
-          // Setup confirmation
+          // Setup Confirmation
           if (msg.setupComplete) {
             setupDone = true;
-            statusEl.textContent = "Live! Speak now.";
+            statusEl.textContent = "Live! Say hello.";
             orb.className = "listening";
             orb.textContent = "LISTENING";
             return;
           }
 
-          // Handle interruption (barge-in)
+          // Interruption (barge-in)
           if (msg.serverContent?.interrupted) {
             stopAllPlayingAudio();
             if (isConnected) {
@@ -373,12 +416,24 @@
             }
           }
 
-          // Handle audio response
+          // Transcript of what user said
+          if (msg.serverContent?.inputTranscription?.text) {
+            statusEl.textContent = "You: " + msg.serverContent.inputTranscription.text;
+          }
+
+          // Transcript of model output
+          if (msg.serverContent?.outputTranscription?.text) {
+            statusEl.textContent = "AI: " + msg.serverContent.outputTranscription.text;
+          }
+
+          // Audio parts from model
           const parts = msg.serverContent?.modelTurn?.parts;
           if (parts) {
             for (const part of parts) {
+              if (part.text && !msg.serverContent?.outputTranscription) {
+                statusEl.textContent = "AI: " + part.text;
+              }
               if (part.inlineData && part.inlineData.mimeType && part.inlineData.mimeType.startsWith("audio/pcm")) {
-                statusEl.textContent = "Gemini is speaking...";
                 playPcmChunk(part.inlineData.data);
               }
             }
@@ -386,6 +441,8 @@
 
           if (msg.serverContent?.turnComplete) {
             if (activeSources.length === 0) {
+              orb.className = isMuted ? "muted" : "listening";
+              orb.textContent = isMuted ? "MUTED" : "LISTENING";
               statusEl.textContent = "Your turn to speak.";
             }
           }
@@ -416,6 +473,8 @@
       isConnected = false;
       setupDone = false;
       isMuted = false;
+      isSpeaking = false;
+      if (silenceTimer) { clearTimeout(silenceTimer); silenceTimer = null; }
       stopAllPlayingAudio();
       if (processor) { processor.disconnect(); processor = null; }
       if (micSourceNode) { micSourceNode.disconnect(); micSourceNode = null; }

@@ -34,7 +34,7 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      padding: 8px;
+      padding: 6px;
     }
     .hidden { display: none !important; }
     input {
@@ -49,8 +49,8 @@
       outline: none;
     }
     #orb {
-      width: 86px;
-      height: 86px;
+      width: 82px;
+      height: 82px;
       border-radius: 50%;
       background: #1e293b;
       border: 4px solid #3b82f6;
@@ -59,7 +59,7 @@
       justify-content: center;
       font-size: 12px;
       font-weight: bold;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       transition: all 0.2s;
     }
     #orb.listening {
@@ -84,11 +84,20 @@
     #status {
       font-size: 11px;
       color: #cbd5e1;
-      line-height: 1.3;
+      line-height: 1.25;
       padding: 0 4px;
       word-break: break-word;
-      max-height: 52px;
+      max-height: 44px;
       overflow: hidden;
+    }
+    #audio-diag {
+      font-size: 10px;
+      color: #38bdf8;
+      margin-top: 4px;
+      height: 14px;
+      line-height: 14px;
+      overflow: hidden;
+      white-space: nowrap;
     }
     footer {
       width: 100%;
@@ -96,12 +105,23 @@
       color: #9ca3af;
       font-size: 11px;
       font-weight: bold;
-      padding: 5px 8px;
+      padding: 4px 6px;
       display: flex;
       justify-content: space-between;
       border-top: 1px solid #1f2937;
     }
     .hi { color: #ffffff; }
+
+    /* Never use display:none on media elements in mobile WebViews */
+    .media-anchor {
+      position: fixed;
+      bottom: 0;
+      right: 0;
+      width: 1px;
+      height: 1px;
+      opacity: 0.01;
+      pointer-events: none;
+    }
   </style>
 </head>
 <body>
@@ -113,7 +133,7 @@
     <div style="font-size: 12px; color: #cbd5e1;">Enter Gemini API Key:</div>
     <input id="key-input" type="password" placeholder="AIzaSy..." autocomplete="off">
     <div style="font-size: 10px; color: #9ca3af; margin-top: 4px;">
-      Tip: Load once with #key=AIza... in URL to auto-save.
+      Tip: Load with #key=AIza... in URL to auto-save.
     </div>
   </div>
 
@@ -121,10 +141,12 @@
   <div id="call-screen" class="hidden">
     <div id="orb">OFFLINE</div>
     <div id="status">Press OK to call</div>
+    <div id="audio-diag">Press 5 for sound test</div>
   </div>
 
-  <!-- HTML5 Audio Element for CloudPhone sound capture (same as YouTube) -->
-  <audio id="cloud-player" preload="auto" playsinline style="display:none;"></audio>
+  <!-- Real visible media elements for CloudPhone audio streaming -->
+  <audio id="cloud-audio" class="media-anchor" preload="auto" playsinline></audio>
+  <video id="cloud-video" class="media-anchor" preload="auto" playsinline muted="false"></video>
 
   <footer>
     <span id="left-hint">Clear</span>
@@ -141,10 +163,12 @@
     const keyInput = document.getElementById("key-input");
     const orb = document.getElementById("orb");
     const statusEl = document.getElementById("status");
+    const diagEl = document.getElementById("audio-diag");
     const leftHint = document.getElementById("left-hint");
     const centerHint = document.getElementById("center-hint");
     const rightHint = document.getElementById("right-hint");
-    const cloudPlayer = document.getElementById("cloud-player");
+    const cloudAudio = document.getElementById("cloud-audio");
+    const cloudVideo = document.getElementById("cloud-video");
 
     // Auto-save key from URL Hash (#key=...) or Query Param (?key=...)
     const hashMatch = window.location.hash.match(/key=([^&]+)/);
@@ -165,15 +189,16 @@
     let setupDone = false;
     let isMuted = false;
 
-    // Hybrid VAD
+    // VAD state
     let isSpeaking = false;
     let silenceTimer = null;
 
-    // CloudPhone HTML5 WAV Audio Queue (Guarantees sound on CloudPhone)
-    let pcmBuffer = [];
-    let pcmBufferByteCount = 0;
-    let wavQueue = [];
-    let isPlayingWav = false;
+    // Diagnostic & Audio Playback Queue
+    let chunkCount = 0;
+    let pcmAccumulator = [];
+    let pcmAccumulatedLength = 0;
+    let audioQueue = [];
+    let isPlayingAudio = false;
 
     function updateScreen() {
       if (!apiKey) {
@@ -188,11 +213,11 @@
         callScreen.classList.remove("hidden");
         leftHint.textContent = isConnected ? "Mute" : "0: Reset";
         centerHint.textContent = isConnected ? "OK: END" : "OK: CALL";
-        rightHint.textContent = isConnected ? "End" : "Exit";
+        rightHint.textContent = isConnected ? "End" : "5: Test";
       }
     }
 
-    // Helper: Convert PCM Float32 to 16kHz PCM Base64 for input
+    // Convert Float32 Mic input to 16kHz PCM Base64
     function downsampleAndConvert16BitPCM(inputData, inputSampleRate) {
       const targetRate = 16000;
       let samples;
@@ -227,8 +252,8 @@
       return btoa(binary);
     }
 
-    // Turn 24kHz raw PCM bytes into a standard 44-byte WAV Blob
-    function pcmToWavBlob(pcmBytes, sampleRate = 24000) {
+    // Build a complete, valid data:audio/wav;base64 URL from 24kHz PCM bytes
+    function pcmToWavDataUri(pcmBytes, sampleRate = 24000) {
       const numChannels = 1;
       const bitsPerSample = 16;
       const byteRate = sampleRate * numChannels * (bitsPerSample / 8);
@@ -246,7 +271,7 @@
       // "fmt "
       view.setUint32(12, 0x666d7420, false);
       view.setUint32(16, 16, true);
-      view.setUint16(20, 1, true); // PCM = 1
+      view.setUint16(20, 1, true); // PCM format = 1
       view.setUint16(22, numChannels, true);
       view.setUint32(24, sampleRate, true);
       view.setUint32(28, byteRate, true);
@@ -257,48 +282,90 @@
       view.setUint32(40, dataSize, true);
 
       new Uint8Array(buffer, 44).set(pcmBytes);
-      return new Blob([buffer], { type: "audio/wav" });
+
+      let binary = "";
+      const bytes = new Uint8Array(buffer);
+      const chunkSize = 0x8000;
+      for (let i = 0; i < bytes.length; i += chunkSize) {
+        binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+      }
+      return "data:audio/wav;base64," + btoa(binary);
     }
 
-    function enqueueAudioChunk(base64Data) {
+    // Generate a simple 1-second 440Hz test beep WAV data URI
+    function generateBeepWavUri() {
+      const sampleRate = 24000;
+      const duration = 0.8;
+      const totalSamples = Math.floor(sampleRate * duration);
+      const buffer = new Uint8Array(totalSamples * 2);
+      const view = new DataView(buffer.buffer);
+      for (let i = 0; i < totalSamples; i++) {
+        const val = Math.sin((2 * Math.PI * 440 * i) / sampleRate) * 0.7;
+        view.setInt16(i * 2, val * 32767, true);
+      }
+      return pcmToWavDataUri(buffer, sampleRate);
+    }
+
+    function playSoundTest() {
+      diagEl.textContent = "Testing sound...";
+      const beepUri = generateBeepWavUri();
+      cloudAudio.src = beepUri;
+      cloudAudio.play().then(() => {
+        diagEl.textContent = "Beep playing! Volume OK?";
+      }).catch(err => {
+        // Fallback to video element
+        cloudVideo.src = beepUri;
+        cloudVideo.play().then(() => {
+          diagEl.textContent = "Beep via video OK!";
+        }).catch(err2 => {
+          diagEl.textContent = "Block: " + (err2.message || err.message);
+        });
+      });
+    }
+
+    // Accumulate incoming PCM chunks from Gemini and queue WAV files
+    function handleIncomingAudioPart(base64Data) {
+      chunkCount++;
+      diagEl.textContent = `Rx chunk #${chunkCount}`;
+
       const binary = atob(base64Data);
       const bytes = new Uint8Array(binary.length);
       for (let i = 0; i < binary.length; i++) {
         bytes[i] = binary.charCodeAt(i);
       }
-      pcmBuffer.push(bytes);
-      pcmBufferByteCount += bytes.byteLength;
 
-      // Flush every ~0.3s of audio (14,400 bytes at 24kHz 16-bit mono)
-      if (pcmBufferByteCount >= 14400) {
-        flushPcmBuffer();
+      pcmAccumulator.push(bytes);
+      pcmAccumulatedLength += bytes.byteLength;
+
+      // Group chunks into ~0.35s blocks (16,800 bytes)
+      if (pcmAccumulatedLength >= 16800) {
+        dispatchPcmBlock();
       }
     }
 
-    function flushPcmBuffer() {
-      if (pcmBufferByteCount === 0) return;
+    function dispatchPcmBlock() {
+      if (pcmAccumulatedLength === 0) return;
 
-      const combined = new Uint8Array(pcmBufferByteCount);
+      const merged = new Uint8Array(pcmAccumulatedLength);
       let offset = 0;
-      for (let i = 0; i < pcmBuffer.length; i++) {
-        combined.set(pcmBuffer[i], offset);
-        offset += pcmBuffer[i].byteLength;
+      for (let i = 0; i < pcmAccumulator.length; i++) {
+        merged.set(pcmAccumulator[i], offset);
+        offset += pcmAccumulator[i].byteLength;
       }
-      pcmBuffer = [];
-      pcmBufferByteCount = 0;
+      pcmAccumulator = [];
+      pcmAccumulatedLength = 0;
 
-      const wavBlob = pcmToWavBlob(combined, 24000);
-      const url = URL.createObjectURL(wavBlob);
-      wavQueue.push(url);
+      const wavUri = pcmToWavDataUri(merged, 24000);
+      audioQueue.push(wavUri);
 
-      if (!isPlayingWav) {
-        playNextWav();
+      if (!isPlayingAudio) {
+        playNextInAudioQueue();
       }
     }
 
-    function playNextWav() {
-      if (wavQueue.length === 0) {
-        isPlayingWav = false;
+    function playNextInAudioQueue() {
+      if (audioQueue.length === 0) {
+        isPlayingAudio = false;
         if (isConnected) {
           orb.className = isMuted ? "muted" : "listening";
           orb.textContent = isMuted ? "MUTED" : "LISTENING";
@@ -306,37 +373,39 @@
         return;
       }
 
-      isPlayingWav = true;
+      isPlayingAudio = true;
       orb.className = "speaking";
       orb.textContent = "SPEAKING";
 
-      const currentUrl = wavQueue.shift();
-      cloudPlayer.src = currentUrl;
-      cloudPlayer.play().catch(e => {
-        console.error("Play error:", e);
+      const currentUri = audioQueue.shift();
+      diagEl.textContent = `Playing voice (${audioQueue.length} queued)...`;
+
+      // Play on cloudAudio (or cloudVideo fallback)
+      cloudAudio.src = currentUri;
+      cloudAudio.play().catch(e => {
+        console.warn("Audio play blocked, trying video:", e);
+        cloudVideo.src = currentUri;
+        cloudVideo.play().catch(e2 => {
+          diagEl.textContent = "Play block: " + e2.message;
+        });
       });
 
-      cloudPlayer.onended = () => {
-        URL.revokeObjectURL(currentUrl);
-        playNextWav();
+      cloudAudio.onended = () => {
+        playNextInAudioQueue();
       };
-
-      cloudPlayer.onerror = () => {
-        URL.revokeObjectURL(currentUrl);
-        playNextWav();
+      cloudAudio.onerror = () => {
+        playNextInAudioQueue();
       };
     }
 
     function stopAllAudio() {
-      pcmBuffer = [];
-      pcmBufferByteCount = 0;
-      wavQueue.forEach(u => URL.revokeObjectURL(u));
-      wavQueue = [];
-      try {
-        cloudPlayer.pause();
-        cloudPlayer.src = "";
-      } catch (_) {}
-      isPlayingWav = false;
+      pcmAccumulator = [];
+      pcmAccumulatedLength = 0;
+      audioQueue = [];
+      chunkCount = 0;
+      try { cloudAudio.pause(); cloudAudio.src = ""; } catch (_) {}
+      try { cloudVideo.pause(); cloudVideo.src = ""; } catch (_) {}
+      isPlayingAudio = false;
     }
 
     async function startLiveCall() {
@@ -348,10 +417,13 @@
           audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true }
         });
 
-        // UNLOCK HTML5 AUDIO ELEMENT IN THIS USER GESTURE (Crucial for CloudPhone!)
+        // 1. PRIME & UNLOCK HTML5 MEDIA IN USER GESTURE (Mandatory on CloudPhone!)
         try {
-          cloudPlayer.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==";
-          cloudPlayer.play().catch(() => {});
+          const silentWav = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==";
+          cloudAudio.src = silentWav;
+          cloudAudio.play().catch(() => {});
+          cloudVideo.src = silentWav;
+          cloudVideo.play().catch(() => {});
         } catch (_) {}
 
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -362,6 +434,8 @@
 
         ws.onopen = () => {
           statusEl.textContent = "Handshaking...";
+          chunkCount = 0;
+
           ws.send(JSON.stringify({
             setup: {
               model: MODEL,
@@ -374,7 +448,7 @@
               inputAudioTranscription: {},
               outputAudioTranscription: {},
               systemInstruction: {
-                parts: [{ text: "You are talking on a live phone call with a user on a feature phone. Be direct, natural, warm, and keep replies short (1-2 sentences)." }]
+                parts: [{ text: "You are on a live voice call with a user on a feature phone. Be direct, natural, warm, and keep replies short (1-2 sentences)." }]
               }
             }
           }));
@@ -392,7 +466,6 @@
             if (!isConnected || !setupDone || isMuted || ws.readyState !== WebSocket.OPEN) return;
             const inputData = e.inputBuffer.getChannelData(0);
 
-            // Speech & Silence Detection
             let sum = 0;
             for (let i = 0; i < inputData.length; i += 4) {
               sum += inputData[i] * inputData[i];
@@ -405,13 +478,13 @@
                 clearTimeout(silenceTimer);
                 silenceTimer = null;
               }
-              if (!isPlayingWav) {
+              if (!isPlayingAudio) {
                 statusEl.textContent = "Hearing you...";
               }
             } else if (isSpeaking) {
               if (!silenceTimer) {
                 silenceTimer = setTimeout(() => {
-                  if (ws && ws.readyState === WebSocket.OPEN && !isPlayingWav) {
+                  if (ws && ws.readyState === WebSocket.OPEN && !isPlayingAudio) {
                     orb.className = "thinking";
                     orb.textContent = "THINKING";
                     statusEl.textContent = "Thinking...";
@@ -460,6 +533,7 @@
           if (msg.setupComplete) {
             setupDone = true;
             statusEl.textContent = "Live! Speak now.";
+            diagEl.textContent = "Ready";
             orb.className = "listening";
             orb.textContent = "LISTENING";
             return;
@@ -474,17 +548,14 @@
             }
           }
 
-          // User transcript
           if (msg.serverContent?.inputTranscription?.text) {
             statusEl.textContent = "You: " + msg.serverContent.inputTranscription.text;
           }
 
-          // AI transcript
           if (msg.serverContent?.outputTranscription?.text) {
             statusEl.textContent = "AI: " + msg.serverContent.outputTranscription.text;
           }
 
-          // Audio parts from model -> sent to HTML5 WAV Player
           const parts = msg.serverContent?.modelTurn?.parts;
           if (parts) {
             for (const part of parts) {
@@ -492,24 +563,22 @@
                 statusEl.textContent = "AI: " + part.text;
               }
               if (part.inlineData && part.inlineData.data) {
-                enqueueAudioChunk(part.inlineData.data);
+                handleIncomingAudioPart(part.inlineData.data);
               }
             }
           }
 
           if (msg.serverContent?.turnComplete) {
-            flushPcmBuffer();
+            dispatchPcmBlock();
           }
         };
 
         ws.onerror = (e) => {
           statusEl.textContent = "Socket error. Check key/net.";
-          console.error("WS error:", e);
           stopLiveCall();
         };
 
         ws.onclose = (e) => {
-          console.log("WS closed:", e.code, e.reason);
           if (e.code !== 1000) {
             statusEl.textContent = `Ended: code ${e.code} ${e.reason || ''}`;
           }
@@ -540,14 +609,15 @@
       if (!statusEl.textContent.startsWith("Ended") && !statusEl.textContent.startsWith("Error")) {
         statusEl.textContent = "Call ended. Press OK to call.";
       }
+      diagEl.textContent = "Press 5 for sound test";
       updateScreen();
     }
 
     function toggleMute() {
       if (!isConnected) return;
       isMuted = !isMuted;
-      orb.className = isMuted ? "muted" : (isPlayingWav ? "speaking" : "listening");
-      orb.textContent = isMuted ? "MUTED" : (isPlayingWav ? "SPEAKING" : "LISTENING");
+      orb.className = isMuted ? "muted" : (isPlayingAudio ? "speaking" : "listening");
+      orb.textContent = isMuted ? "MUTED" : (isPlayingAudio ? "SPEAKING" : "LISTENING");
       statusEl.textContent = isMuted ? "Microphone muted" : "Listening...";
     }
 
@@ -571,22 +641,33 @@
         return;
       }
 
-      // SCREEN 2: Live Call
+      // SCREEN 2: Live Call Controls
+      // Keypad '5': Trigger Sound Test
+      if (key === "5") {
+        e.preventDefault();
+        playSoundTest();
+        return;
+      }
+
+      // OK Key: Start / End Call
       if (key === "Enter" || key === "Accept") {
         e.preventDefault();
         if (isConnected) stopLiveCall();
         else startLiveCall();
       }
+      // Left Soft Key: Mute
       else if (key === "SoftLeft" || key === "F1") {
         e.preventDefault();
         if (isConnected) toggleMute();
       }
+      // Right Soft Key: Back / Exit
       else if (key === "Escape" || key === "Backspace" || key === "SoftRight" || key === "F2") {
         if (isConnected) {
           e.preventDefault();
           stopLiveCall();
         }
       }
+      // Keypad '0': Reset Key
       else if (key === "0" && !isConnected) {
         e.preventDefault();
         localStorage.removeItem(STORAGE_KEY);

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=240, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Gemini Live</title>
+  <title>Gemini Chat</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -14,9 +14,8 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      align-items: center;
-      text-align: center;
       overflow: hidden;
+      font-size: 13px;
     }
     header {
       width: 100%;
@@ -24,80 +23,138 @@
       color: #60a5fa;
       font-size: 12px;
       font-weight: bold;
-      padding: 5px;
+      padding: 6px 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       border-bottom: 1px solid #1f2937;
+      flex-shrink: 0;
     }
-    #setup-screen, #call-screen {
+    header .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #10b981;
+      display: inline-block;
+      margin-right: 4px;
+    }
+    #setup-screen {
       flex: 1;
-      width: 100%;
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      padding: 6px;
+      padding: 12px;
+      text-align: center;
+    }
+    #chat-screen {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      height: calc(100vh - 54px);
     }
     .hidden { display: none !important; }
-    input {
-      width: 100%;
+    input[type="password"], input[type="text"] {
       background: #030712;
       color: #ffffff;
-      border: 2px solid #3b82f6;
+      border: 1px solid #3b82f6;
       border-radius: 4px;
-      padding: 6px;
+      padding: 6px 8px;
       font-size: 13px;
-      margin: 8px 0;
       outline: none;
     }
-    #orb {
-      width: 82px;
-      height: 82px;
-      border-radius: 50%;
-      background: #1e293b;
-      border: 4px solid #3b82f6;
+    #chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 6px;
       display: flex;
-      align-items: center;
-      justify-content: center;
+      flex-direction: column;
+      gap: 6px;
+      scroll-behavior: smooth;
+    }
+    .msg {
+      padding: 6px 8px;
+      border-radius: 8px;
+      max-width: 90%;
+      line-height: 1.35;
       font-size: 12px;
-      font-weight: bold;
-      margin-bottom: 6px;
-      transition: all 0.2s;
-    }
-    #orb.listening {
-      background: #064e3b;
-      border-color: #10b981;
-      box-shadow: 0 0 16px #10b981;
-    }
-    #orb.speaking {
-      background: #1e3a8a;
-      border-color: #60a5fa;
-      box-shadow: 0 0 18px #3b82f6;
-    }
-    #orb.thinking {
-      background: #581c87;
-      border-color: #a855f7;
-      box-shadow: 0 0 16px #a855f7;
-    }
-    #orb.muted {
-      background: #7f1d1d;
-      border-color: #ef4444;
-    }
-    #status {
-      font-size: 11px;
-      color: #cbd5e1;
-      line-height: 1.25;
-      padding: 0 4px;
       word-break: break-word;
-      max-height: 44px;
-      overflow: hidden;
     }
-    #audio-diag {
+    .msg.user {
+      background: #2563eb;
+      color: #ffffff;
+      align-self: flex-end;
+      border-bottom-right-radius: 2px;
+    }
+    .msg.gemini {
+      background: #1e293b;
+      color: #e2e8f0;
+      align-self: flex-start;
+      border-bottom-left-radius: 2px;
+      border: 1px solid #334155;
+    }
+    .msg.voice-tag {
       font-size: 10px;
-      color: #38bdf8;
-      margin-top: 4px;
-      height: 14px;
-      line-height: 14px;
-      overflow: hidden;
-      white-space: nowrap;
+      color: #93c5fd;
+      margin-bottom: 2px;
+      display: block;
+    }
+    #status-banner {
+      font-size: 11px;
+      color: #93c5fd;
+      background: #0f172a;
+      padding: 3px 6px;
+      text-align: center;
+      border-top: 1px solid #1e293b;
+      display: none;
+      flex-shrink: 0;
+    }
+    #status-banner.recording {
+      display: block;
+      background: #7f1d1d;
+      color: #fecaca;
+      font-weight: bold;
+      animation: pulse 1s infinite alternate;
+    }
+    #status-banner.thinking {
+      display: block;
+      background: #3b0764;
+      color: #e9d5ff;
+    }
+    @keyframes pulse {
+      from { opacity: 0.8; }
+      to { opacity: 1; }
+    }
+    #input-bar {
+      display: flex;
+      padding: 4px;
+      background: #0f172a;
+      border-top: 1px solid #1f2937;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    #prompt-input {
+      flex: 1;
+      height: 28px;
+    }
+    #send-btn, #voice-btn {
+      background: #2563eb;
+      color: #ffffff;
+      border: none;
+      border-radius: 4px;
+      padding: 0 8px;
+      font-size: 11px;
+      font-weight: bold;
+      height: 28px;
+      cursor: pointer;
+    }
+    #voice-btn {
+      background: #059669;
+    }
+    #voice-btn.recording {
+      background: #dc2626;
+      animation: pulse 0.8s infinite alternate;
     }
     footer {
       width: 100%;
@@ -109,66 +166,64 @@
       display: flex;
       justify-content: space-between;
       border-top: 1px solid #1f2937;
+      flex-shrink: 0;
     }
     .hi { color: #ffffff; }
-
-    /* Never use display:none on media elements in mobile WebViews */
-    .media-anchor {
-      position: fixed;
-      bottom: 0;
-      right: 0;
-      width: 1px;
-      height: 1px;
-      opacity: 0.01;
-      pointer-events: none;
-    }
   </style>
 </head>
 <body>
 
-  <header>GEMINI LIVE TALK</header>
+  <header>
+    <div><span class="status-dot"></span>GEMINI AI</div>
+    <div style="font-size: 10px; color: #94a3b8;" id="model-tag">Flash 2.5</div>
+  </header>
 
   <!-- SCREEN 1: ONE-TIME KEY SETUP -->
   <div id="setup-screen">
-    <div style="font-size: 12px; color: #cbd5e1;">Enter Gemini API Key:</div>
-    <input id="key-input" type="password" placeholder="AIzaSy..." autocomplete="off">
-    <div style="font-size: 10px; color: #9ca3af; margin-top: 4px;">
-      Tip: Load with #key=AIza... in URL to auto-save.
+    <div style="font-size: 13px; color: #cbd5e1; margin-bottom: 8px;">Enter Gemini API Key:</div>
+    <input id="key-input" type="password" placeholder="AIzaSy..." autocomplete="off" style="width: 100%;">
+    <div style="font-size: 10px; color: #9ca3af; margin-top: 8px;">
+      Tip: Load URL with #key=AIza... to save automatically.
     </div>
   </div>
 
-  <!-- SCREEN 2: LIVE VOICE CALL -->
-  <div id="call-screen" class="hidden">
-    <div id="orb">OFFLINE</div>
-    <div id="status">Press OK to call</div>
-    <div id="audio-diag">Press 5 for sound test</div>
+  <!-- SCREEN 2: FEATURE-PHONE CHAT -->
+  <div id="chat-screen" class="hidden">
+    <div id="chat-messages">
+      <div class="msg gemini">Hello! Ask me anything, or press <b>*</b> / <b>Mic</b> to voice type.</div>
+    </div>
+    
+    <div id="status-banner"></div>
+
+    <div id="input-bar">
+      <button id="voice-btn" title="Voice Typing (*)">🎙️</button>
+      <input id="prompt-input" type="text" placeholder="Type or speak..." autocomplete="off">
+      <button id="send-btn">OK</button>
+    </div>
   </div>
 
-  <!-- Real visible media elements for CloudPhone audio streaming -->
-  <audio id="cloud-audio" class="media-anchor" preload="auto" playsinline></audio>
-  <video id="cloud-video" class="media-anchor" preload="auto" playsinline muted="false"></video>
-
   <footer>
-    <span id="left-hint">Clear</span>
-    <span id="center-hint" class="hi">OK: SAVE</span>
-    <span id="right-hint">Exit</span>
+    <span id="left-hint">Voice (*)</span>
+    <span id="center-hint" class="hi">Send (OK)</span>
+    <span id="right-hint">New (#)</span>
   </footer>
 
   <script>
-    const MODEL = "models/gemini-3.8-live";
+    // Fast, lightweight, highly reliable REST endpoint
+    const MODEL = "gemini-2.5-flash";
     const STORAGE_KEY = "hmd_gemini_live_key";
 
     const setupScreen = document.getElementById("setup-screen");
-    const callScreen = document.getElementById("call-screen");
+    const chatScreen = document.getElementById("chat-screen");
     const keyInput = document.getElementById("key-input");
-    const orb = document.getElementById("orb");
-    const statusEl = document.getElementById("status");
-    const diagEl = document.getElementById("audio-diag");
+    const chatMessages = document.getElementById("chat-messages");
+    const promptInput = document.getElementById("prompt-input");
+    const sendBtn = document.getElementById("send-btn");
+    const voiceBtn = document.getElementById("voice-btn");
+    const statusBanner = document.getElementById("status-banner");
     const leftHint = document.getElementById("left-hint");
     const centerHint = document.getElementById("center-hint");
     const rightHint = document.getElementById("right-hint");
-    const cloudAudio = document.getElementById("cloud-audio");
-    const cloudVideo = document.getElementById("cloud-video");
 
     // Auto-save key from URL Hash (#key=...) or Query Param (?key=...)
     const hashMatch = window.location.hash.match(/key=([^&]+)/);
@@ -180,80 +235,70 @@
     }
 
     let apiKey = localStorage.getItem(STORAGE_KEY) || "";
-    let ws = null;
-    let audioCtx = null;
+    let conversationHistory = [];
+    let isProcessing = false;
+
+    // Voice typing recording state
+    let isRecordingVoice = false;
     let micStream = null;
-    let micSourceNode = null;
+    let audioCtx = null;
     let processor = null;
-    let isConnected = false;
-    let setupDone = false;
-    let isMuted = false;
-
-    // VAD state
-    let isSpeaking = false;
-    let silenceTimer = null;
-
-    // Diagnostic & Audio Playback Queue
-    let chunkCount = 0;
-    let pcmAccumulator = [];
-    let pcmAccumulatedLength = 0;
-    let audioQueue = [];
-    let isPlayingAudio = false;
+    let recordedPcmChunks = [];
+    let recordedPcmLength = 0;
+    let recordingTimeout = null;
 
     function updateScreen() {
       if (!apiKey) {
         setupScreen.classList.remove("hidden");
-        callScreen.classList.add("hidden");
+        chatScreen.classList.add("hidden");
         leftHint.textContent = "Clear";
         centerHint.textContent = "OK: SAVE";
-        rightHint.textContent = "Back";
+        rightHint.textContent = "";
         keyInput.focus();
       } else {
         setupScreen.classList.add("hidden");
-        callScreen.classList.remove("hidden");
-        leftHint.textContent = isConnected ? "Mute" : "0: Reset";
-        centerHint.textContent = isConnected ? "OK: END" : "OK: CALL";
-        rightHint.textContent = isConnected ? "End" : "5: Test";
+        chatScreen.classList.remove("hidden");
+        leftHint.textContent = isRecordingVoice ? "Cancel" : "Voice (*)";
+        centerHint.textContent = isRecordingVoice ? "Done (OK)" : "Send (OK)";
+        rightHint.textContent = "New (#)";
+        promptInput.focus();
       }
     }
 
-    // Convert Float32 Mic input to 16kHz PCM Base64
-    function downsampleAndConvert16BitPCM(inputData, inputSampleRate) {
-      const targetRate = 16000;
-      let samples;
-      if (inputSampleRate === targetRate) {
-        samples = inputData;
-      } else {
-        const ratio = inputSampleRate / targetRate;
-        const newLength = Math.round(inputData.length / ratio);
-        samples = new Float32Array(newLength);
-        for (let i = 0; i < newLength; i++) {
-          const originIdx = i * ratio;
-          const idx = Math.floor(originIdx);
-          const frac = originIdx - idx;
-          const next = idx + 1 < inputData.length ? inputData[idx + 1] : inputData[idx];
-          samples[i] = inputData[idx] + frac * (next - inputData[idx]);
-        }
+    function appendMessage(role, text, isVoice = false) {
+      const msgEl = document.createElement("div");
+      msgEl.className = "msg " + role;
+      if (isVoice && role === "user") {
+        const tag = document.createElement("span");
+        tag.className = "voice-tag";
+        tag.textContent = "🎙️ Spoken prompt:";
+        msgEl.appendChild(tag);
       }
-
-      const buffer = new ArrayBuffer(samples.length * 2);
-      const view = new DataView(buffer);
-      for (let i = 0; i < samples.length; i++) {
-        let s = Math.max(-1, Math.min(1, samples[i]));
-        view.setInt16(i * 2, s < 0 ? s * 0x8000 : s * 0x7fff, true);
-      }
-
-      let binary = "";
-      const bytes = new Uint8Array(buffer);
-      const chunkSize = 0x8000;
-      for (let i = 0; i < bytes.length; i += chunkSize) {
-        binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
-      }
-      return btoa(binary);
+      const textNode = document.createElement("span");
+      textNode.textContent = text;
+      msgEl.appendChild(textNode);
+      chatMessages.appendChild(msgEl);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
-    // Build a complete, valid data:audio/wav;base64 URL from 24kHz PCM bytes
-    function pcmToWavDataUri(pcmBytes, sampleRate = 24000) {
+    // High performance linear downsampling Float32 -> 16kHz PCM
+    function downsampleFloat32(source, fromRate, toRate) {
+      if (fromRate === toRate) return source;
+      const ratio = fromRate / toRate;
+      const newLen = Math.round(source.length / ratio);
+      const target = new Float32Array(newLen);
+      for (let i = 0; i < newLen; i++) {
+        const originIdx = i * ratio;
+        const idx = Math.floor(originIdx);
+        const frac = originIdx - idx;
+        const next = idx + 1 < source.length ? source[idx + 1] : source[idx];
+        target[i] = source[idx] + frac * (next - source[idx]);
+      }
+      return target;
+    }
+
+    // Convert recorded PCM to standard WAV Base64
+    function pcmToWavBase64(pcmBytes, sampleRate = 16000) {
       const numChannels = 1;
       const bitsPerSample = 16;
       const byteRate = sampleRate * numChannels * (bitsPerSample / 8);
@@ -263,22 +308,18 @@
       const buffer = new ArrayBuffer(44 + dataSize);
       const view = new DataView(buffer);
 
-      // "RIFF"
-      view.setUint32(0, 0x52494646, false);
+      view.setUint32(0, 0x52494646, false); // "RIFF"
       view.setUint32(4, 36 + dataSize, true);
-      // "WAVE"
-      view.setUint32(8, 0x57415645, false);
-      // "fmt "
-      view.setUint32(12, 0x666d7420, false);
+      view.setUint32(8, 0x57415645, false); // "WAVE"
+      view.setUint32(12, 0x666d7420, false); // "fmt "
       view.setUint32(16, 16, true);
-      view.setUint16(20, 1, true); // PCM format = 1
+      view.setUint16(20, 1, true); // PCM = 1
       view.setUint16(22, numChannels, true);
       view.setUint32(24, sampleRate, true);
       view.setUint32(28, byteRate, true);
       view.setUint16(32, blockAlign, true);
       view.setUint16(34, bitsPerSample, true);
-      // "data"
-      view.setUint32(36, 0x64617461, false);
+      view.setUint32(36, 0x64617461, false); // "data"
       view.setUint32(40, dataSize, true);
 
       new Uint8Array(buffer, 44).set(pcmBytes);
@@ -289,338 +330,228 @@
       for (let i = 0; i < bytes.length; i += chunkSize) {
         binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
       }
-      return "data:audio/wav;base64," + btoa(binary);
+      return btoa(binary);
     }
 
-    // Generate a simple 1-second 440Hz test beep WAV data URI
-    function generateBeepWavUri() {
-      const sampleRate = 24000;
-      const duration = 0.8;
-      const totalSamples = Math.floor(sampleRate * duration);
-      const buffer = new Uint8Array(totalSamples * 2);
-      const view = new DataView(buffer.buffer);
-      for (let i = 0; i < totalSamples; i++) {
-        const val = Math.sin((2 * Math.PI * 440 * i) / sampleRate) * 0.7;
-        view.setInt16(i * 2, val * 32767, true);
-      }
-      return pcmToWavDataUri(buffer, sampleRate);
-    }
+    // Call Gemini 2.5 Flash over plain HTTPS REST (Ultra-reliable on CloudPhone)
+    async function sendPromptToGemini(contentsPayload, displayUserText = null, isVoice = false) {
+      if (isProcessing) return;
+      isProcessing = true;
 
-    function playSoundTest() {
-      diagEl.textContent = "Testing sound...";
-      const beepUri = generateBeepWavUri();
-      cloudAudio.src = beepUri;
-      cloudAudio.play().then(() => {
-        diagEl.textContent = "Beep playing! Volume OK?";
-      }).catch(err => {
-        // Fallback to video element
-        cloudVideo.src = beepUri;
-        cloudVideo.play().then(() => {
-          diagEl.textContent = "Beep via video OK!";
-        }).catch(err2 => {
-          diagEl.textContent = "Block: " + (err2.message || err.message);
-        });
-      });
-    }
-
-    // Accumulate incoming PCM chunks from Gemini and queue WAV files
-    function handleIncomingAudioPart(base64Data) {
-      chunkCount++;
-      diagEl.textContent = `Rx chunk #${chunkCount}`;
-
-      const binary = atob(base64Data);
-      const bytes = new Uint8Array(binary.length);
-      for (let i = 0; i < binary.length; i++) {
-        bytes[i] = binary.charCodeAt(i);
+      if (displayUserText) {
+        appendMessage("user", displayUserText, isVoice);
       }
 
-      pcmAccumulator.push(bytes);
-      pcmAccumulatedLength += bytes.byteLength;
+      statusBanner.className = "thinking";
+      statusBanner.textContent = "Gemini is thinking...";
 
-      // Group chunks into ~0.35s blocks (16,800 bytes)
-      if (pcmAccumulatedLength >= 16800) {
-        dispatchPcmBlock();
-      }
-    }
-
-    function dispatchPcmBlock() {
-      if (pcmAccumulatedLength === 0) return;
-
-      const merged = new Uint8Array(pcmAccumulatedLength);
-      let offset = 0;
-      for (let i = 0; i < pcmAccumulator.length; i++) {
-        merged.set(pcmAccumulator[i], offset);
-        offset += pcmAccumulator[i].byteLength;
-      }
-      pcmAccumulator = [];
-      pcmAccumulatedLength = 0;
-
-      const wavUri = pcmToWavDataUri(merged, 24000);
-      audioQueue.push(wavUri);
-
-      if (!isPlayingAudio) {
-        playNextInAudioQueue();
-      }
-    }
-
-    function playNextInAudioQueue() {
-      if (audioQueue.length === 0) {
-        isPlayingAudio = false;
-        if (isConnected) {
-          orb.className = isMuted ? "muted" : "listening";
-          orb.textContent = isMuted ? "MUTED" : "LISTENING";
-        }
-        return;
-      }
-
-      isPlayingAudio = true;
-      orb.className = "speaking";
-      orb.textContent = "SPEAKING";
-
-      const currentUri = audioQueue.shift();
-      diagEl.textContent = `Playing voice (${audioQueue.length} queued)...`;
-
-      // Play on cloudAudio (or cloudVideo fallback)
-      cloudAudio.src = currentUri;
-      cloudAudio.play().catch(e => {
-        console.warn("Audio play blocked, trying video:", e);
-        cloudVideo.src = currentUri;
-        cloudVideo.play().catch(e2 => {
-          diagEl.textContent = "Play block: " + e2.message;
-        });
-      });
-
-      cloudAudio.onended = () => {
-        playNextInAudioQueue();
-      };
-      cloudAudio.onerror = () => {
-        playNextInAudioQueue();
-      };
-    }
-
-    function stopAllAudio() {
-      pcmAccumulator = [];
-      pcmAccumulatedLength = 0;
-      audioQueue = [];
-      chunkCount = 0;
-      try { cloudAudio.pause(); cloudAudio.src = ""; } catch (_) {}
-      try { cloudVideo.pause(); cloudVideo.src = ""; } catch (_) {}
-      isPlayingAudio = false;
-    }
-
-    async function startLiveCall() {
-      const wsUrl = `wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=${apiKey}`;
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${apiKey}`;
 
       try {
-        statusEl.textContent = "Opening mic...";
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: contentsPayload,
+            systemInstruction: {
+              parts: [{
+                text: "You are a concise, smart AI assistant for a user on a compact 240x320 feature phone keypad. Answer clearly, accurately, and keep answers concise and easy to read without unnecessary fluff."
+              }]
+            }
+          })
+        });
+
+        const data = await res.json();
+
+        if (data.error) {
+          appendMessage("gemini", "Error: " + (data.error.message || "Failed to get reply."));
+        } else {
+          const replyText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (replyText) {
+            appendMessage("gemini", replyText);
+            // Save to history for multi-turn conversation
+            conversationHistory.push({
+              role: "model",
+              parts: [{ text: replyText }]
+            });
+          } else {
+            appendMessage("gemini", "No response received.");
+          }
+        }
+      } catch (err) {
+        appendMessage("gemini", "Connection error: " + err.message);
+      } finally {
+        isProcessing = false;
+        statusBanner.className = "";
+        statusBanner.textContent = "";
+        promptInput.focus();
+      }
+    }
+
+    function handleSendText() {
+      const text = promptInput.value.trim();
+      if (!text || isProcessing) return;
+      promptInput.value = "";
+
+      // Add to conversation
+      conversationHistory.push({
+        role: "user",
+        parts: [{ text: text }]
+      });
+
+      sendPromptToGemini([...conversationHistory], text, false);
+    }
+
+    // VOICE TYPING: Record speech and let Gemini transcribe & answer directly!
+    async function startVoiceRecording() {
+      if (isRecordingVoice || isProcessing) return;
+
+      try {
+        statusBanner.className = "recording";
+        statusBanner.textContent = "🎙️ Listening... Speak now!";
+        voiceBtn.classList.add("recording");
+        isRecordingVoice = true;
+        updateScreen();
+
         micStream = await navigator.mediaDevices.getUserMedia({
           audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true }
         });
 
-        // 1. PRIME & UNLOCK HTML5 MEDIA IN USER GESTURE (Mandatory on CloudPhone!)
-        try {
-          const silentWav = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==";
-          cloudAudio.src = silentWav;
-          cloudAudio.play().catch(() => {});
-          cloudVideo.src = silentWav;
-          cloudVideo.play().catch(() => {});
-        } catch (_) {}
-
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         if (audioCtx.state === "suspended") await audioCtx.resume();
 
-        statusEl.textContent = "Connecting to Gemini 3.8...";
-        ws = new WebSocket(wsUrl);
+        recordedPcmChunks = [];
+        recordedPcmLength = 0;
 
-        ws.onopen = () => {
-          statusEl.textContent = "Handshaking...";
-          chunkCount = 0;
+        const micSource = audioCtx.createMediaStreamSource(micStream);
+        processor = audioCtx.createScriptProcessor(4096, 1, 1);
 
-          ws.send(JSON.stringify({
-            setup: {
-              model: MODEL,
-              generationConfig: {
-                responseModalities: ["AUDIO"],
-                speechConfig: {
-                  voiceConfig: { prebuiltVoiceConfig: { voiceName: "Puck" } }
-                }
-              },
-              inputAudioTranscription: {},
-              outputAudioTranscription: {},
-              systemInstruction: {
-                parts: [{ text: "You are on a live voice call with a user on a feature phone. Be direct, natural, warm, and keep replies short (1-2 sentences)." }]
-              }
-            }
-          }));
+        processor.onaudioprocess = (e) => {
+          if (!isRecordingVoice) return;
+          const inputData = e.inputBuffer.getChannelData(0);
+          const downsampled = downsampleFloat32(inputData, audioCtx.sampleRate, 16000);
 
-          isConnected = true;
-          setupDone = false;
-          updateScreen();
-          orb.className = "listening";
-          orb.textContent = "CONNECTING";
+          // Convert Float32 to Int16 PCM
+          const int16 = new Int16Array(downsampled.length);
+          for (let i = 0; i < downsampled.length; i++) {
+            const s = Math.max(-1, Math.min(1, downsampled[i]));
+            int16[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
+          }
 
-          micSourceNode = audioCtx.createMediaStreamSource(micStream);
-          processor = audioCtx.createScriptProcessor(4096, 1, 1);
-
-          processor.onaudioprocess = (e) => {
-            if (!isConnected || !setupDone || isMuted || ws.readyState !== WebSocket.OPEN) return;
-            const inputData = e.inputBuffer.getChannelData(0);
-
-            let sum = 0;
-            for (let i = 0; i < inputData.length; i += 4) {
-              sum += inputData[i] * inputData[i];
-            }
-            const rms = Math.sqrt(sum / (inputData.length / 4));
-
-            if (rms > 0.025) {
-              isSpeaking = true;
-              if (silenceTimer) {
-                clearTimeout(silenceTimer);
-                silenceTimer = null;
-              }
-              if (!isPlayingAudio) {
-                statusEl.textContent = "Hearing you...";
-              }
-            } else if (isSpeaking) {
-              if (!silenceTimer) {
-                silenceTimer = setTimeout(() => {
-                  if (ws && ws.readyState === WebSocket.OPEN && !isPlayingAudio) {
-                    orb.className = "thinking";
-                    orb.textContent = "THINKING";
-                    statusEl.textContent = "Thinking...";
-                    ws.send(JSON.stringify({
-                      realtimeInput: { audioStreamEnd: true }
-                    }));
-                  }
-                  isSpeaking = false;
-                  silenceTimer = null;
-                }, 750);
-              }
-            }
-
-            const base64Pcm = downsampleAndConvert16BitPCM(inputData, audioCtx.sampleRate);
-
-            ws.send(JSON.stringify({
-              realtimeInput: {
-                audio: { data: base64Pcm, mimeType: "audio/pcm;rate=16000" },
-                mediaChunks: [{ data: base64Pcm, mimeType: "audio/pcm;rate=16000" }]
-              }
-            }));
-          };
-
-          micSourceNode.connect(processor);
-          processor.connect(audioCtx.destination);
+          const byteChunk = new Uint8Array(int16.buffer);
+          recordedPcmChunks.push(byteChunk);
+          recordedPcmLength += byteChunk.byteLength;
         };
 
-        ws.onmessage = async (event) => {
-          let text;
-          if (event.data instanceof Blob) {
-            text = await event.data.text();
-          } else if (event.data instanceof ArrayBuffer) {
-            text = new TextDecoder().decode(event.data);
-          } else {
-            text = event.data;
-          }
+        micSource.connect(processor);
+        processor.connect(audioCtx.destination);
 
-          const msg = JSON.parse(text);
-
-          if (msg.error) {
-            statusEl.textContent = "Error: " + (msg.error.message || JSON.stringify(msg.error));
-            console.error("Gemini Error:", msg.error);
-            return;
-          }
-
-          if (msg.setupComplete) {
-            setupDone = true;
-            statusEl.textContent = "Live! Speak now.";
-            diagEl.textContent = "Ready";
-            orb.className = "listening";
-            orb.textContent = "LISTENING";
-            return;
-          }
-
-          if (msg.serverContent?.interrupted) {
-            stopAllAudio();
-            if (isConnected) {
-              orb.className = isMuted ? "muted" : "listening";
-              orb.textContent = isMuted ? "MUTED" : "LISTENING";
-              statusEl.textContent = "Interrupted. Listening...";
-            }
-          }
-
-          if (msg.serverContent?.inputTranscription?.text) {
-            statusEl.textContent = "You: " + msg.serverContent.inputTranscription.text;
-          }
-
-          if (msg.serverContent?.outputTranscription?.text) {
-            statusEl.textContent = "AI: " + msg.serverContent.outputTranscription.text;
-          }
-
-          const parts = msg.serverContent?.modelTurn?.parts;
-          if (parts) {
-            for (const part of parts) {
-              if (part.text && !msg.serverContent?.outputTranscription) {
-                statusEl.textContent = "AI: " + part.text;
-              }
-              if (part.inlineData && part.inlineData.data) {
-                handleIncomingAudioPart(part.inlineData.data);
-              }
-            }
-          }
-
-          if (msg.serverContent?.turnComplete) {
-            dispatchPcmBlock();
-          }
-        };
-
-        ws.onerror = (e) => {
-          statusEl.textContent = "Socket error. Check key/net.";
-          stopLiveCall();
-        };
-
-        ws.onclose = (e) => {
-          if (e.code !== 1000) {
-            statusEl.textContent = `Ended: code ${e.code} ${e.reason || ''}`;
-          }
-          stopLiveCall();
-        };
+        // Auto stop after 7 seconds max to keep response fast
+        recordingTimeout = setTimeout(() => {
+          if (isRecordingVoice) stopVoiceRecordingAndSend();
+        }, 7000);
 
       } catch (err) {
-        statusEl.textContent = "Audio error: " + err.message;
-        console.error(err);
-        stopLiveCall();
+        statusBanner.className = "";
+        statusBanner.textContent = "";
+        voiceBtn.classList.remove("recording");
+        isRecordingVoice = false;
+        appendMessage("gemini", "Mic error: " + err.message);
+        updateScreen();
       }
     }
 
-    function stopLiveCall() {
-      isConnected = false;
-      setupDone = false;
-      isMuted = false;
-      isSpeaking = false;
-      if (silenceTimer) { clearTimeout(silenceTimer); silenceTimer = null; }
-      stopAllAudio();
+    function stopVoiceRecordingAndSend() {
+      if (!isRecordingVoice) return;
+      isRecordingVoice = false;
+      if (recordingTimeout) { clearTimeout(recordingTimeout); recordingTimeout = null; }
+
+      voiceBtn.classList.remove("recording");
+      statusBanner.className = "thinking";
+      statusBanner.textContent = "Processing speech...";
+
+      // Clean up audio graph
       if (processor) { processor.disconnect(); processor = null; }
-      if (micSourceNode) { micSourceNode.disconnect(); micSourceNode = null; }
       if (micStream) { micStream.getTracks().forEach(t => t.stop()); micStream = null; }
-      if (ws) { ws.close(); ws = null; }
       if (audioCtx) { audioCtx.close(); audioCtx = null; }
-      orb.className = "";
-      orb.textContent = "OFFLINE";
-      if (!statusEl.textContent.startsWith("Ended") && !statusEl.textContent.startsWith("Error")) {
-        statusEl.textContent = "Call ended. Press OK to call.";
+
+      updateScreen();
+
+      if (recordedPcmLength < 3200) {
+        // Less than 0.1s of audio recorded
+        statusBanner.className = "";
+        statusBanner.textContent = "";
+        appendMessage("gemini", "Recording was too short. Speak after clicking Voice.");
+        return;
       }
-      diagEl.textContent = "Press 5 for sound test";
+
+      // Merge recorded PCM chunks
+      const combined = new Uint8Array(recordedPcmLength);
+      let offset = 0;
+      for (let i = 0; i < recordedPcmChunks.length; i++) {
+        combined.set(recordedPcmChunks[i], offset);
+        offset += recordedPcmChunks[i].byteLength;
+      }
+      recordedPcmChunks = [];
+      recordedPcmLength = 0;
+
+      const wavBase64 = pcmToWavBase64(combined, 16000);
+
+      // Send spoken audio directly to Gemini 2.5 Flash
+      const voiceTurn = {
+        role: "user",
+        parts: [
+          {
+            inlineData: {
+              mimeType: "audio/wav",
+              data: wavBase64
+            }
+          },
+          {
+            text: "Please transcribe the speech in this audio and answer it. Format as: '[Your Question]\\n\\n[Answer]'"
+          }
+        ]
+      };
+
+      conversationHistory.push(voiceTurn);
+      sendPromptToGemini([...conversationHistory], "🎙️ Voice message sent...", true);
+    }
+
+    function cancelVoiceRecording() {
+      if (!isRecordingVoice) return;
+      isRecordingVoice = false;
+      if (recordingTimeout) { clearTimeout(recordingTimeout); recordingTimeout = null; }
+      voiceBtn.classList.remove("recording");
+      statusBanner.className = "";
+      statusBanner.textContent = "";
+      if (processor) { processor.disconnect(); processor = null; }
+      if (micStream) { micStream.getTracks().forEach(t => t.stop()); micStream = null; }
+      if (audioCtx) { audioCtx.close(); audioCtx = null; }
+      recordedPcmChunks = [];
+      recordedPcmLength = 0;
       updateScreen();
     }
 
-    function toggleMute() {
-      if (!isConnected) return;
-      isMuted = !isMuted;
-      orb.className = isMuted ? "muted" : (isPlayingAudio ? "speaking" : "listening");
-      orb.textContent = isMuted ? "MUTED" : (isPlayingAudio ? "SPEAKING" : "LISTENING");
-      statusEl.textContent = isMuted ? "Microphone muted" : "Listening...";
+    function clearChat() {
+      conversationHistory = [];
+      chatMessages.innerHTML = "";
+      appendMessage("gemini", "Chat cleared. Ready for your next question!");
+      promptInput.value = "";
+      promptInput.focus();
     }
 
+    // Button Click Listeners
+    sendBtn.addEventListener("click", () => {
+      if (isRecordingVoice) stopVoiceRecordingAndSend();
+      else handleSendText();
+    });
+
+    voiceBtn.addEventListener("click", () => {
+      if (isRecordingVoice) stopVoiceRecordingAndSend();
+      else startVoiceRecording();
+    });
+
+    // Feature-Phone Keypad Navigation
     document.addEventListener("keydown", (e) => {
       const key = e.key;
 
@@ -641,34 +572,44 @@
         return;
       }
 
-      // SCREEN 2: Live Call Controls
-      // Keypad '5': Trigger Sound Test
-      if (key === "5") {
-        e.preventDefault();
-        playSoundTest();
-        return;
-      }
-
-      // OK Key: Start / End Call
+      // SCREEN 2: Chat screen controls
+      // Center Key (Enter / OK): Send message or Finish voice recording
       if (key === "Enter" || key === "Accept") {
         e.preventDefault();
-        if (isConnected) stopLiveCall();
-        else startLiveCall();
-      }
-      // Left Soft Key: Mute
-      else if (key === "SoftLeft" || key === "F1") {
-        e.preventDefault();
-        if (isConnected) toggleMute();
-      }
-      // Right Soft Key: Back / Exit
-      else if (key === "Escape" || key === "Backspace" || key === "SoftRight" || key === "F2") {
-        if (isConnected) {
-          e.preventDefault();
-          stopLiveCall();
+        if (isRecordingVoice) {
+          stopVoiceRecordingAndSend();
+        } else {
+          handleSendText();
         }
       }
-      // Keypad '0': Reset Key
-      else if (key === "0" && !isConnected) {
+      // Star Key (*) or Left Soft Key: Toggle Voice Typing
+      else if (key === "*" || key === "SoftLeft" || key === "F1") {
+        e.preventDefault();
+        if (isRecordingVoice) {
+          cancelVoiceRecording();
+        } else {
+          startVoiceRecording();
+        }
+      }
+      // Hash Key (#) or Right Soft Key (when input empty): New Chat
+      else if (key === "#" || ((key === "Escape" || key === "SoftRight" || key === "F2") && !promptInput.value)) {
+        e.preventDefault();
+        if (isRecordingVoice) {
+          cancelVoiceRecording();
+        } else {
+          clearChat();
+        }
+      }
+      // Scroll Up (Up Arrow)
+      else if (key === "ArrowUp") {
+        chatMessages.scrollTop -= 60;
+      }
+      // Scroll Down (Down Arrow)
+      else if (key === "ArrowDown") {
+        chatMessages.scrollTop += 60;
+      }
+      // Keypad '0' (when prompt input is completely empty): Reset API Key
+      else if (key === "0" && !promptInput.value && !isRecordingVoice && document.activeElement !== promptInput) {
         e.preventDefault();
         localStorage.removeItem(STORAGE_KEY);
         apiKey = "";

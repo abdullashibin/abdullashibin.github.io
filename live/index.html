@@ -133,7 +133,7 @@
 
     #status-banner {
       font-size: 10px;
-      padding: 3px 6px;
+      padding: 4px 6px;
       text-align: center;
       display: none;
       flex-shrink: 0;
@@ -205,7 +205,6 @@
     .hint-col { text-align: center; flex: 1; }
     .hint-left { text-align: left; }
     .hint-right { text-align: right; }
-    .hi { color: #ffffff; }
   </style>
 </head>
 <body>
@@ -233,15 +232,18 @@
   <div id="chat-screen">
     <div id="chat-messages">
       <div class="msg gemini">
-        <b>Welcome!</b> Type a message and press <b>Send</b> (or <b>OK</b>). You can also press <b>🎙️</b> to speak.
+        <b>Connected!</b> Type a message and press <b>Send</b>, or press <b>🎙️</b> (or <b>LSK</b>) to speak.
       </div>
     </div>
 
     <div id="status-banner"></div>
 
+    <!-- Hidden Native Audio Capture Input (Supported across CloudPhone versions) -->
+    <input type="file" id="audio-file-input" accept="audio/*" capture="microphone" class="hidden">
+
     <!-- Wrapped in a true HTML Form so Enter on keypad natively triggers submit -->
     <form id="chat-form" action="javascript:void(0);">
-      <button type="button" id="voice-btn" class="btn" title="Voice Typing">🎙️</button>
+      <button type="button" id="voice-btn" class="btn" title="Voice Typing (LSK)">🎙️</button>
       <input id="prompt-input" type="text" placeholder="Type prompt..." autocomplete="off">
       <button type="submit" id="send-btn" class="btn">Send</button>
     </form>
@@ -279,6 +281,7 @@
     const promptInput = document.getElementById("prompt-input");
     const sendBtn = document.getElementById("send-btn");
     const voiceBtn = document.getElementById("voice-btn");
+    const audioFileInput = document.getElementById("audio-file-input");
     const statusBanner = document.getElementById("status-banner");
     const leftHint = document.getElementById("left-hint");
     const centerHint = document.getElementById("center-hint");
@@ -368,12 +371,11 @@
       }
 
       statusBanner.className = "thinking";
-      statusBanner.textContent = "Thinking...";
+      statusBanner.textContent = "Gemini is thinking...";
 
       let success = false;
       let lastErrorMessage = "";
 
-      // Loop through candidate models if 404 (not found) occurs
       for (let i = currentModelIndex; i < CANDIDATE_MODELS.length; i++) {
         const modelName = CANDIDATE_MODELS[i];
         modelTag.textContent = "[" + modelName.replace("gemini-", "") + "]";
@@ -387,7 +389,7 @@
               contents: contentsPayload,
               systemInstruction: {
                 parts: [{
-                  text: "You are a concise, helpful AI assistant for a user on a compact 240x320 feature phone keypad. Keep answers concise, factual, and easy to read."
+                  text: "You are a concise, smart AI assistant for a user on a compact 240x320 feature phone. Keep answers direct, accurate, and easy to read."
                 }]
               }
             })
@@ -402,18 +404,15 @@
               role: "model",
               parts: [{ text: reply }]
             });
-            currentModelIndex = i; // Lock into working model
+            currentModelIndex = i;
             success = true;
             break;
           } else if (data.error) {
             lastErrorMessage = data.error.message || `Error ${res.status}`;
-            // If model is not found or unsupported, fallback to next
             if (data.error.code === 404 || lastErrorMessage.toLowerCase().includes("not found")) {
-              console.warn(`Model ${modelName} not found, falling back...`);
               continue;
             } else {
-              // Authentication error, quota error, etc.
-              appendMessage("error", `API Error (${data.error.code || res.status}): ${lastErrorMessage}`);
+              appendMessage("error", `API Error: ${lastErrorMessage}`);
               success = true;
               break;
             }
@@ -436,7 +435,7 @@
       promptInput.focus();
     }
 
-    // Form submit handler (invoked by Enter, OK key, or clicking Send)
+    // Form submit handler
     chatForm.addEventListener("submit", (e) => {
       e.preventDefault();
       handleSendText();
@@ -466,128 +465,158 @@
       promptInput.focus();
     }
 
-    // VOICE TYPING ENGINE (16kHz PCM downsampled WAV)
+    // Helper: Convert Blob or File to Base64
+    function readBlobAsBase64(blob) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result;
+          const commaIdx = result.indexOf(",");
+          resolve({
+            mimeType: blob.type || "audio/webm",
+            data: commaIdx !== -1 ? result.substring(commaIdx + 1) : result
+          });
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    }
+
+    // VOICE TYPING ENGINE (Chromium MediaRecorder + Native Sound Recorder Fallback)
     let isRecordingVoice = false;
     let micStream = null;
-    let audioCtx = null;
-    let processor = null;
-    let recordedPcmChunks = [];
-    let recordedPcmLength = 0;
-    let recordingTimeout = null;
-
-    function downsampleFloat32(source, fromRate, toRate) {
-      if (fromRate === toRate) return source;
-      const ratio = fromRate / toRate;
-      const newLen = Math.round(source.length / ratio);
-      const target = new Float32Array(newLen);
-      for (let i = 0; i < newLen; i++) {
-        const originIdx = i * ratio;
-        const idx = Math.floor(originIdx);
-        const frac = originIdx - idx;
-        const next = idx + 1 < source.length ? source[idx + 1] : source[idx];
-        target[i] = source[idx] + frac * (next - source[idx]);
-      }
-      return target;
-    }
-
-    function pcmToWavBase64(pcmBytes, sampleRate = 16000) {
-      const numChannels = 1;
-      const bitsPerSample = 16;
-      const byteRate = sampleRate * numChannels * (bitsPerSample / 8);
-      const blockAlign = numChannels * (bitsPerSample / 8);
-      const dataSize = pcmBytes.byteLength;
-
-      const buffer = new ArrayBuffer(44 + dataSize);
-      const view = new DataView(buffer);
-
-      view.setUint32(0, 0x52494646, false); // "RIFF"
-      view.setUint32(4, 36 + dataSize, true);
-      view.setUint32(8, 0x57415645, false); // "WAVE"
-      view.setUint32(12, 0x666d7420, false); // "fmt "
-      view.setUint32(16, 16, true);
-      view.setUint16(20, 1, true); // PCM = 1
-      view.setUint16(22, numChannels, true);
-      view.setUint32(24, sampleRate, true);
-      view.setUint32(28, byteRate, true);
-      view.setUint16(32, blockAlign, true);
-      view.setUint16(34, bitsPerSample, true);
-      view.setUint32(36, 0x64617461, false); // "data"
-      view.setUint32(40, dataSize, true);
-
-      new Uint8Array(buffer, 44).set(pcmBytes);
-
-      let binary = "";
-      const bytes = new Uint8Array(buffer);
-      const chunkSize = 0x8000;
-      for (let i = 0; i < bytes.length; i += chunkSize) {
-        binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
-      }
-      return btoa(binary);
-    }
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let recordTimer = null;
+    let recordSeconds = 0;
 
     async function startVoiceRecording() {
       if (isRecordingVoice || isProcessing) return;
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        appendMessage("error", "Microphone access not available on this browser.");
+
+      // Check if getUserMedia is supported
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || typeof MediaRecorder === "undefined") {
+        console.log("Live stream not supported, opening native recorder...");
+        audioFileInput.click();
         return;
       }
 
       try {
-        statusBanner.className = "recording";
-        statusBanner.textContent = "🎙️ Listening... Speak clearly!";
-        voiceBtn.classList.add("recording");
-        isRecordingVoice = true;
-        renderScreenState();
+        micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-        micStream = await navigator.mediaDevices.getUserMedia({
-          audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true }
-        });
+        let mimeType = "audio/webm";
+        if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) {
+          mimeType = "audio/webm;codecs=opus";
+        } else if (MediaRecorder.isTypeSupported("audio/webm")) {
+          mimeType = "audio/webm";
+        } else if (MediaRecorder.isTypeSupported("audio/mp4")) {
+          mimeType = "audio/mp4";
+        } else if (MediaRecorder.isTypeSupported("audio/ogg")) {
+          mimeType = "audio/ogg";
+        }
 
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        if (audioCtx.state === "suspended") await audioCtx.resume();
+        mediaRecorder = new MediaRecorder(micStream, { mimeType });
+        audioChunks = [];
 
-        recordedPcmChunks = [];
-        recordedPcmLength = 0;
-
-        const micSource = audioCtx.createMediaStreamSource(micStream);
-        processor = audioCtx.createScriptProcessor(4096, 1, 1);
-
-        processor.onaudioprocess = (e) => {
-          if (!isRecordingVoice) return;
-          const inputData = e.inputBuffer.getChannelData(0);
-          const downsampled = downsampleFloat32(inputData, audioCtx.sampleRate, 16000);
-
-          const int16 = new Int16Array(downsampled.length);
-          for (let i = 0; i < downsampled.length; i++) {
-            const s = Math.max(-1, Math.min(1, downsampled[i]));
-            int16[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
+        mediaRecorder.ondataavailable = (e) => {
+          if (e.data && e.data.size > 0) {
+            audioChunks.push(e.data);
           }
-
-          const byteChunk = new Uint8Array(int16.buffer);
-          recordedPcmChunks.push(byteChunk);
-          recordedPcmLength += byteChunk.byteLength;
         };
 
-        micSource.connect(processor);
-        processor.connect(audioCtx.destination);
+        mediaRecorder.onstop = async () => {
+          clearInterval(recordTimer);
+          voiceBtn.classList.remove("recording");
+          statusBanner.className = "";
+          statusBanner.textContent = "";
 
-        // Auto-stop after 8 seconds max
-        recordingTimeout = setTimeout(() => {
-          if (isRecordingVoice) stopVoiceRecordingAndSend();
-        }, 8000);
+          // Stop mic tracks
+          if (micStream) {
+            micStream.getTracks().forEach(t => t.stop());
+            micStream = null;
+          }
+
+          if (audioChunks.length === 0) {
+            appendMessage("error", "No audio captured from mic. Opening Phone Voice Recorder...");
+            audioFileInput.click();
+            return;
+          }
+
+          const combinedBlob = new Blob(audioChunks, { type: mimeType });
+          audioChunks = [];
+
+          if (combinedBlob.size < 100) {
+            appendMessage("error", "Recording too short. Opening Phone Voice Recorder...");
+            audioFileInput.click();
+            return;
+          }
+
+          statusBanner.className = "thinking";
+          statusBanner.textContent = "Transcribing speech...";
+
+          try {
+            const audioData = await readBlobAsBase64(combinedBlob);
+            const cleanMime = audioData.mimeType.split(";")[0] || "audio/webm";
+
+            const voicePayload = [
+              ...conversationHistory,
+              {
+                role: "user",
+                parts: [
+                  {
+                    inlineData: {
+                      mimeType: cleanMime,
+                      data: audioData.data
+                    }
+                  },
+                  {
+                    text: "First transcribe my spoken words accurately as 'You said: [transcription]', then directly provide your answer. Keep your response concise."
+                  }
+                ]
+              }
+            ];
+
+            sendPromptToGemini(voicePayload, "🎙️ [Voice prompt sent]", true);
+          } catch (err) {
+            appendMessage("error", "Voice processing error: " + err.message);
+          }
+        };
+
+        mediaRecorder.start(200); // Collect slice every 200ms
+        isRecordingVoice = true;
+        recordSeconds = 0;
+        voiceBtn.classList.add("recording");
+        statusBanner.className = "recording";
+        statusBanner.textContent = "🎙️ Listening (0s)... OK to send";
+        renderScreenState();
+
+        recordTimer = setInterval(() => {
+          recordSeconds++;
+          statusBanner.textContent = `🎙️ Listening (${recordSeconds}s)... OK to send`;
+          if (recordSeconds >= 12) {
+            stopVoiceRecordingAndSend();
+          }
+        }, 1000);
 
       } catch (err) {
         cancelVoiceRecording();
-        appendMessage("error", "Mic error: " + err.message);
+        console.warn("getUserMedia failed, using native file picker:", err);
+        appendMessage("error", "Live mic blocked: " + err.message + ". Opening Phone Recorder...");
+        audioFileInput.click();
       }
     }
 
     function cancelVoiceRecording() {
-      if (recordingTimeout) clearTimeout(recordingTimeout);
+      if (recordTimer) clearInterval(recordTimer);
       isRecordingVoice = false;
-      if (processor) { processor.disconnect(); processor = null; }
-      if (audioCtx) { audioCtx.close(); audioCtx = null; }
-      if (micStream) { micStream.getTracks().forEach(t => t.stop()); micStream = null; }
+      if (mediaRecorder && mediaRecorder.state !== "inactive") {
+        try { mediaRecorder.stop(); } catch (e) {}
+      }
+      if (micStream) {
+        micStream.getTracks().forEach(t => t.stop());
+        micStream = null;
+      }
+      mediaRecorder = null;
+      audioChunks = [];
       voiceBtn.classList.remove("recording");
       statusBanner.className = "";
       statusBanner.textContent = "";
@@ -596,56 +625,56 @@
 
     function stopVoiceRecordingAndSend() {
       if (!isRecordingVoice) return;
-      if (recordingTimeout) clearTimeout(recordingTimeout);
       isRecordingVoice = false;
-
-      if (processor) { processor.disconnect(); processor = null; }
-      if (audioCtx) { audioCtx.close(); audioCtx = null; }
-      if (micStream) { micStream.getTracks().forEach(t => t.stop()); micStream = null; }
-      voiceBtn.classList.remove("recording");
       renderScreenState();
 
-      if (recordedPcmLength === 0) {
-        statusBanner.className = "";
-        statusBanner.textContent = "";
-        return;
+      if (mediaRecorder && mediaRecorder.state !== "inactive") {
+        mediaRecorder.stop();
       }
+    }
+
+    // Native Audio File/Recorder Handler (100% reliable fallback on CloudPhone)
+    audioFileInput.addEventListener("change", async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
 
       statusBanner.className = "thinking";
-      statusBanner.textContent = "Processing speech...";
+      statusBanner.textContent = "Uploading audio...";
 
-      // Combine audio chunks
-      const combined = new Uint8Array(recordedPcmLength);
-      let offset = 0;
-      for (const chunk of recordedPcmChunks) {
-        combined.set(chunk, offset);
-        offset += chunk.byteLength;
-      }
-      recordedPcmChunks = [];
-      recordedPcmLength = 0;
-
-      const wavBase64 = pcmToWavBase64(combined, 16000);
-
-      const voicePayload = [
-        ...conversationHistory,
-        {
-          role: "user",
-          parts: [
-            {
-              inlineData: {
-                mimeType: "audio/wav",
-                data: wavBase64
-              }
-            },
-            {
-              text: "Please transcribe my spoken audio and answer the question concisely."
-            }
-          ]
+      try {
+        const audioData = await readBlobAsBase64(file);
+        let cleanMime = audioData.mimeType.split(";")[0] || "audio/wav";
+        if (cleanMime.startsWith("video/")) {
+          cleanMime = cleanMime.replace("video/", "audio/");
         }
-      ];
 
-      sendPromptToGemini(voicePayload, "🎙️ [Spoken audio sent]", true);
-    }
+        const voicePayload = [
+          ...conversationHistory,
+          {
+            role: "user",
+            parts: [
+              {
+                inlineData: {
+                  mimeType: cleanMime,
+                  data: audioData.data
+                }
+              },
+              {
+                text: "First transcribe my spoken words accurately as 'You said: [transcription]', then directly provide your answer. Keep your response concise."
+              }
+            ]
+          }
+        ];
+
+        sendPromptToGemini(voicePayload, "🎙️ [Recorded audio sent]", true);
+      } catch (err) {
+        appendMessage("error", "Failed to read audio: " + err.message);
+        statusBanner.className = "";
+        statusBanner.textContent = "";
+      } finally {
+        audioFileInput.value = "";
+      }
+    });
 
     voiceBtn.addEventListener("click", () => {
       if (isRecordingVoice) stopVoiceRecordingAndSend();
@@ -665,6 +694,13 @@
         } else if (apiKey) {
           startVoiceRecording();
         }
+        return;
+      }
+
+      // Center Key (Enter / OK) when recording finishes voice
+      if ((key === "Enter" || keyCode === 13 || key === "Accept") && isRecordingVoice) {
+        e.preventDefault();
+        stopVoiceRecordingAndSend();
         return;
       }
 

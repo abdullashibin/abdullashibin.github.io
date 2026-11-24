@@ -123,8 +123,8 @@
     <div id="status">Press OK to call</div>
   </div>
 
-  <!-- Native HTML5 audio bridge for Cloud Phone streaming -->
-  <audio id="cloud-player" autoplay playsinline style="display:none;"></audio>
+  <!-- HTML5 Audio Element for CloudPhone sound capture (same as YouTube) -->
+  <audio id="cloud-player" preload="auto" playsinline style="display:none;"></audio>
 
   <footer>
     <span id="left-hint">Clear</span>
@@ -161,16 +161,19 @@
     let micStream = null;
     let micSourceNode = null;
     let processor = null;
-    let mediaStreamDest = null;
     let isConnected = false;
     let setupDone = false;
     let isMuted = false;
-    let nextPlayTime = 0;
-    let activeSources = [];
 
     // Hybrid VAD
     let isSpeaking = false;
     let silenceTimer = null;
+
+    // CloudPhone HTML5 WAV Audio Queue (Guarantees sound on CloudPhone)
+    let pcmBuffer = [];
+    let pcmBufferByteCount = 0;
+    let wavQueue = [];
+    let isPlayingWav = false;
 
     function updateScreen() {
       if (!apiKey) {
@@ -189,25 +192,25 @@
       }
     }
 
-    // Linear Resampling Float32 helper
-    function resampleFloat32(source, fromRate, toRate) {
-      if (fromRate === toRate) return source;
-      const ratio = fromRate / toRate;
-      const newLen = Math.round(source.length / ratio);
-      const target = new Float32Array(newLen);
-      for (let i = 0; i < newLen; i++) {
-        const originIdx = i * ratio;
-        const idx = Math.floor(originIdx);
-        const frac = originIdx - idx;
-        const next = idx + 1 < source.length ? source[idx + 1] : source[idx];
-        target[i] = source[idx] + frac * (next - source[idx]);
-      }
-      return target;
-    }
-
-    // Convert Float32 mic data to 16kHz PCM Base64
+    // Helper: Convert PCM Float32 to 16kHz PCM Base64 for input
     function downsampleAndConvert16BitPCM(inputData, inputSampleRate) {
-      const samples = resampleFloat32(inputData, inputSampleRate, 16000);
+      const targetRate = 16000;
+      let samples;
+      if (inputSampleRate === targetRate) {
+        samples = inputData;
+      } else {
+        const ratio = inputSampleRate / targetRate;
+        const newLength = Math.round(inputData.length / ratio);
+        samples = new Float32Array(newLength);
+        for (let i = 0; i < newLength; i++) {
+          const originIdx = i * ratio;
+          const idx = Math.floor(originIdx);
+          const frac = originIdx - idx;
+          const next = idx + 1 < inputData.length ? inputData[idx + 1] : inputData[idx];
+          samples[i] = inputData[idx] + frac * (next - inputData[idx]);
+        }
+      }
+
       const buffer = new ArrayBuffer(samples.length * 2);
       const view = new DataView(buffer);
       for (let i = 0; i < samples.length; i++) {
@@ -224,78 +227,116 @@
       return btoa(binary);
     }
 
-    function stopAllPlayingAudio() {
-      activeSources.forEach(src => {
-        try { src.stop(); } catch (_) {}
-      });
-      activeSources = [];
-      if (audioCtx) nextPlayTime = audioCtx.currentTime;
+    // Turn 24kHz raw PCM bytes into a standard 44-byte WAV Blob
+    function pcmToWavBlob(pcmBytes, sampleRate = 24000) {
+      const numChannels = 1;
+      const bitsPerSample = 16;
+      const byteRate = sampleRate * numChannels * (bitsPerSample / 8);
+      const blockAlign = numChannels * (bitsPerSample / 8);
+      const dataSize = pcmBytes.byteLength;
+
+      const buffer = new ArrayBuffer(44 + dataSize);
+      const view = new DataView(buffer);
+
+      // "RIFF"
+      view.setUint32(0, 0x52494646, false);
+      view.setUint32(4, 36 + dataSize, true);
+      // "WAVE"
+      view.setUint32(8, 0x57415645, false);
+      // "fmt "
+      view.setUint32(12, 0x666d7420, false);
+      view.setUint32(16, 16, true);
+      view.setUint16(20, 1, true); // PCM = 1
+      view.setUint16(22, numChannels, true);
+      view.setUint32(24, sampleRate, true);
+      view.setUint32(28, byteRate, true);
+      view.setUint16(32, blockAlign, true);
+      view.setUint16(34, bitsPerSample, true);
+      // "data"
+      view.setUint32(36, 0x64617461, false);
+      view.setUint32(40, dataSize, true);
+
+      new Uint8Array(buffer, 44).set(pcmBytes);
+      return new Blob([buffer], { type: "audio/wav" });
     }
 
-    function playPcmChunk(base64Data) {
-      if (!audioCtx) return;
-      try {
-        if (audioCtx.state === "suspended") audioCtx.resume();
-
-        const binary = atob(base64Data);
-        const bytes = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) {
-          bytes[i] = binary.charCodeAt(i);
-        }
-
-        const dataView = new DataView(bytes.buffer);
-        const sampleCount = Math.floor(bytes.byteLength / 2);
-        const float32_24k = new Float32Array(sampleCount);
-        for (let i = 0; i < sampleCount; i++) {
-          float32_24k[i] = dataView.getInt16(i * 2, true) / 32768.0;
-        }
-
-        // Resample incoming 24kHz PCM to audioCtx native rate (44.1k/48k)
-        // This prevents NotSupportedError on mobile webviews that enforce native sampleRate!
-        const nativeFloat32 = resampleFloat32(float32_24k, 24000, audioCtx.sampleRate);
-
-        const audioBuffer = audioCtx.createBuffer(1, nativeFloat32.length, audioCtx.sampleRate);
-        audioBuffer.getChannelData(0).set(nativeFloat32);
-
-        const source = audioCtx.createBufferSource();
-        source.buffer = audioBuffer;
-
-        // Boost gain for phone loudspeaker
-        const gainNode = audioCtx.createGain();
-        gainNode.gain.value = 1.8;
-
-        source.connect(gainNode);
-
-        // Route to standard AudioContext destination
-        gainNode.connect(audioCtx.destination);
-
-        // ALSO route to HTML5 audio element stream bridge for Cloud Phone!
-        if (mediaStreamDest) {
-          gainNode.connect(mediaStreamDest);
-        }
-
-        const now = audioCtx.currentTime;
-        if (nextPlayTime < now) nextPlayTime = now;
-        source.start(nextPlayTime);
-        nextPlayTime += audioBuffer.duration;
-
-        activeSources.push(source);
-        orb.className = "speaking";
-        orb.textContent = "SPEAKING";
-
-        source.onended = () => {
-          const idx = activeSources.indexOf(source);
-          if (idx !== -1) activeSources.splice(idx, 1);
-
-          if (activeSources.length === 0 && isConnected) {
-            orb.className = isMuted ? "muted" : "listening";
-            orb.textContent = isMuted ? "MUTED" : "LISTENING";
-          }
-        };
-      } catch (err) {
-        console.error("Playback error:", err);
-        statusEl.textContent = "Audio error: " + err.message;
+    function enqueueAudioChunk(base64Data) {
+      const binary = atob(base64Data);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
       }
+      pcmBuffer.push(bytes);
+      pcmBufferByteCount += bytes.byteLength;
+
+      // Flush every ~0.3s of audio (14,400 bytes at 24kHz 16-bit mono)
+      if (pcmBufferByteCount >= 14400) {
+        flushPcmBuffer();
+      }
+    }
+
+    function flushPcmBuffer() {
+      if (pcmBufferByteCount === 0) return;
+
+      const combined = new Uint8Array(pcmBufferByteCount);
+      let offset = 0;
+      for (let i = 0; i < pcmBuffer.length; i++) {
+        combined.set(pcmBuffer[i], offset);
+        offset += pcmBuffer[i].byteLength;
+      }
+      pcmBuffer = [];
+      pcmBufferByteCount = 0;
+
+      const wavBlob = pcmToWavBlob(combined, 24000);
+      const url = URL.createObjectURL(wavBlob);
+      wavQueue.push(url);
+
+      if (!isPlayingWav) {
+        playNextWav();
+      }
+    }
+
+    function playNextWav() {
+      if (wavQueue.length === 0) {
+        isPlayingWav = false;
+        if (isConnected) {
+          orb.className = isMuted ? "muted" : "listening";
+          orb.textContent = isMuted ? "MUTED" : "LISTENING";
+        }
+        return;
+      }
+
+      isPlayingWav = true;
+      orb.className = "speaking";
+      orb.textContent = "SPEAKING";
+
+      const currentUrl = wavQueue.shift();
+      cloudPlayer.src = currentUrl;
+      cloudPlayer.play().catch(e => {
+        console.error("Play error:", e);
+      });
+
+      cloudPlayer.onended = () => {
+        URL.revokeObjectURL(currentUrl);
+        playNextWav();
+      };
+
+      cloudPlayer.onerror = () => {
+        URL.revokeObjectURL(currentUrl);
+        playNextWav();
+      };
+    }
+
+    function stopAllAudio() {
+      pcmBuffer = [];
+      pcmBufferByteCount = 0;
+      wavQueue.forEach(u => URL.revokeObjectURL(u));
+      wavQueue = [];
+      try {
+        cloudPlayer.pause();
+        cloudPlayer.src = "";
+      } catch (_) {}
+      isPlayingWav = false;
     }
 
     async function startLiveCall() {
@@ -307,33 +348,16 @@
           audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true }
         });
 
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        if (audioCtx.state === "suspended") await audioCtx.resume();
-        nextPlayTime = audioCtx.currentTime;
-
-        // Warm up audio channel with user gesture so Cloud Phone audio pipeline activates
+        // UNLOCK HTML5 AUDIO ELEMENT IN THIS USER GESTURE (Crucial for CloudPhone!)
         try {
-          const osc = audioCtx.createOscillator();
-          const warmGain = audioCtx.createGain();
-          warmGain.gain.value = 0.001;
-          osc.connect(warmGain);
-          warmGain.connect(audioCtx.destination);
-          osc.start();
-          osc.stop(audioCtx.currentTime + 0.03);
+          cloudPlayer.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==";
+          cloudPlayer.play().catch(() => {});
         } catch (_) {}
 
-        // Set up HTML5 MediaStream bridge for Cloud Phone streaming (same pipeline YouTube uses!)
-        try {
-          if (audioCtx.createMediaStreamDestination) {
-            mediaStreamDest = audioCtx.createMediaStreamDestination();
-            cloudPlayer.srcObject = mediaStreamDest.stream;
-            cloudPlayer.play().catch(() => {});
-          }
-        } catch (e) {
-          console.log("MediaStreamDest unsupported:", e);
-        }
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === "suspended") await audioCtx.resume();
 
-        statusEl.textContent = "Connecting...";
+        statusEl.textContent = "Connecting to Gemini 3.8...";
         ws = new WebSocket(wsUrl);
 
         ws.onopen = () => {
@@ -350,7 +374,7 @@
               inputAudioTranscription: {},
               outputAudioTranscription: {},
               systemInstruction: {
-                parts: [{ text: "You are talking on a real-time live phone call with a user on a feature phone. Be direct, natural, warm, and keep replies short (1-2 sentences)." }]
+                parts: [{ text: "You are talking on a live phone call with a user on a feature phone. Be direct, natural, warm, and keep replies short (1-2 sentences)." }]
               }
             }
           }));
@@ -381,14 +405,13 @@
                 clearTimeout(silenceTimer);
                 silenceTimer = null;
               }
-              if (activeSources.length === 0) {
+              if (!isPlayingWav) {
                 statusEl.textContent = "Hearing you...";
               }
             } else if (isSpeaking) {
               if (!silenceTimer) {
-                // When silence lasts 750ms after speech, tell Gemini to answer immediately!
                 silenceTimer = setTimeout(() => {
-                  if (ws && ws.readyState === WebSocket.OPEN && activeSources.length === 0) {
+                  if (ws && ws.readyState === WebSocket.OPEN && !isPlayingWav) {
                     orb.className = "thinking";
                     orb.textContent = "THINKING";
                     statusEl.textContent = "Thinking...";
@@ -443,7 +466,7 @@
           }
 
           if (msg.serverContent?.interrupted) {
-            stopAllPlayingAudio();
+            stopAllAudio();
             if (isConnected) {
               orb.className = isMuted ? "muted" : "listening";
               orb.textContent = isMuted ? "MUTED" : "LISTENING";
@@ -461,7 +484,7 @@
             statusEl.textContent = "AI: " + msg.serverContent.outputTranscription.text;
           }
 
-          // Audio playback
+          // Audio parts from model -> sent to HTML5 WAV Player
           const parts = msg.serverContent?.modelTurn?.parts;
           if (parts) {
             for (const part of parts) {
@@ -469,17 +492,13 @@
                 statusEl.textContent = "AI: " + part.text;
               }
               if (part.inlineData && part.inlineData.data) {
-                playPcmChunk(part.inlineData.data);
+                enqueueAudioChunk(part.inlineData.data);
               }
             }
           }
 
           if (msg.serverContent?.turnComplete) {
-            if (activeSources.length === 0) {
-              orb.className = isMuted ? "muted" : "listening";
-              orb.textContent = isMuted ? "MUTED" : "LISTENING";
-              statusEl.textContent = "Your turn to speak.";
-            }
+            flushPcmBuffer();
           }
         };
 
@@ -510,14 +529,12 @@
       isMuted = false;
       isSpeaking = false;
       if (silenceTimer) { clearTimeout(silenceTimer); silenceTimer = null; }
-      stopAllPlayingAudio();
+      stopAllAudio();
       if (processor) { processor.disconnect(); processor = null; }
       if (micSourceNode) { micSourceNode.disconnect(); micSourceNode = null; }
       if (micStream) { micStream.getTracks().forEach(t => t.stop()); micStream = null; }
       if (ws) { ws.close(); ws = null; }
       if (audioCtx) { audioCtx.close(); audioCtx = null; }
-      mediaStreamDest = null;
-      try { cloudPlayer.pause(); cloudPlayer.srcObject = null; } catch (_) {}
       orb.className = "";
       orb.textContent = "OFFLINE";
       if (!statusEl.textContent.startsWith("Ended") && !statusEl.textContent.startsWith("Error")) {
@@ -529,8 +546,8 @@
     function toggleMute() {
       if (!isConnected) return;
       isMuted = !isMuted;
-      orb.className = isMuted ? "muted" : (activeSources.length > 0 ? "speaking" : "listening");
-      orb.textContent = isMuted ? "MUTED" : (activeSources.length > 0 ? "SPEAKING" : "LISTENING");
+      orb.className = isMuted ? "muted" : (isPlayingWav ? "speaking" : "listening");
+      orb.textContent = isMuted ? "MUTED" : (isPlayingWav ? "SPEAKING" : "LISTENING");
       statusEl.textContent = isMuted ? "Microphone muted" : "Listening...";
     }
 
